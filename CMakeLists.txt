@@ -18,6 +18,7 @@ endif()
 
 set(PROJ_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PROJ_SRC_DIR ${PROJ_DIR}/Source)
+set(PROJ_THIRDPARTY_DIR ${PROJ_DIR}/Source/ThirdParty)
 set(PROJ_RESOURCE_DIR ${PROJ_DIR}/Resources)
 set(PROJ_DEPENDS_DIR ${PROJ_DIR}/Depends)
 set(PROJ_OUTPUT_DIR ${PROJ_DIR}/Out)
