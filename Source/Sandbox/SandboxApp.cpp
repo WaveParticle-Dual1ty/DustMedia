@@ -1,7 +1,8 @@
 ﻿#include <iostream>
+#include "MediaEngine/Include/Core/Core.h"
 
 int main()
 {
-    std::cout << "Sandbox\n";
+    ME_LOG_INFO("Sandbox", "Init");
     return 1;
 }
