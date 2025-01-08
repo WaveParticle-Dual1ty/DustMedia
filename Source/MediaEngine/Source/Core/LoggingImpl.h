@@ -10,7 +10,7 @@
 
 #include "MediaEngine/Include/Core/Logging.h"
 
-namespace MediaEngine
+namespace ME
 {
 class LogginImpl
 {
@@ -24,4 +24,4 @@ private:
     std::shared_ptr<spdlog::logger> m_Logger;
 };
 
-}  // namespace MediaEngine
+}  //namespace ME

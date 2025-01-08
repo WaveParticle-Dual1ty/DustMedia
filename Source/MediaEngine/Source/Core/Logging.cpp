@@ -1,7 +1,7 @@
 ﻿#include "MediaEngine/Include/Core/Logging.h"
 #include "LoggingImpl.h"
 
-namespace MediaEngine
+namespace ME
 {
 Logging& Logging::GetInstance()
 {
@@ -39,4 +39,4 @@ Logging::~Logging()
     }
 }
 
-}  // namespace MediaEngine
+}  //namespace ME

@@ -2,7 +2,7 @@
 #include <string>
 #include <format>
 
-namespace MediaEngine
+namespace ME
 {
 enum class LogLevel
 {
@@ -52,12 +52,10 @@ inline void WriteLog(LogLevel _level, const char* tag, const char* _fmt, const c
     logger.Write(_level, buf.c_str());
 }
 
-}  // namespace MediaEngine
+}  //namespace ME
 
-#define ME_LOG_TRACE(tag, fmt, ...) MediaEngine::WriteLog(MediaEngine::LogLevel::Trace, tag, fmt, ##__VA_ARGS__)
-#define ME_LOG_DEBUG(tag, fmt, ...) MediaEngine::WriteLog(MediaEngine::LogLevel::Debug, tag, fmt, ##__VA_ARGS__)
-#define ME_LOG_INFO(tag, fmt, ...) MediaEngine::WriteLog(MediaEngine::LogLevel::Info, tag, fmt, ##__VA_ARGS__)
-#define ME_LOG_WARN(tag, fmt, ...) \
-    MediaEngine::WriteLog(MediaEngine::LogLevel::Warn, tag, fmt, __FILE__, __LINE__, ##__VA_ARGS__)
-#define ME_LOG_ERROR(tag, fmt, ...) \
-    MediaEngine::WriteLog(MediaEngine::LogLevel::Error, tag, fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define ME_LOG_TRACE(tag, fmt, ...) ME::WriteLog(ME::LogLevel::Trace, tag, fmt, ##__VA_ARGS__)
+#define ME_LOG_DEBUG(tag, fmt, ...) ME::WriteLog(ME::LogLevel::Debug, tag, fmt, ##__VA_ARGS__)
+#define ME_LOG_INFO(tag, fmt, ...) ME::WriteLog(ME::LogLevel::Info, tag, fmt, ##__VA_ARGS__)
+#define ME_LOG_WARN(tag, fmt, ...) ME::WriteLog(ME::LogLevel::Warn, tag, fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define ME_LOG_ERROR(tag, fmt, ...) ME::WriteLog(ME::LogLevel::Error, tag, fmt, __FILE__, __LINE__, ##__VA_ARGS__)

@@ -1,6 +1,6 @@
 ﻿#include "LoggingImpl.h"
 
-namespace MediaEngine
+namespace ME
 {
 void LogginImpl::Init()
 {
@@ -42,4 +42,4 @@ void LogginImpl::Write(LogLevel _level, const char* _str)
     }
 }
 
-}  // namespace MediaEngine
+}  //namespace ME
