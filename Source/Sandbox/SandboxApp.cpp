@@ -11,5 +11,6 @@ std::unique_ptr<ME::Application> ME::CreateApplication()
 }
 
 SandboxApp::SandboxApp()
+    : Application({"Sandbox"})
 {
 }
