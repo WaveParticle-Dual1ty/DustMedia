@@ -1,5 +1,14 @@
 ﻿#include "WindowsVulkanWindow.h"
+
+#ifdef ME_PLATFORM_WINDOWS
+
+#include "MediaEngine/Include/Event/KeyCodes.h"
+#include "MediaEngine/Include/Event/MouseCodes.h"
+#include "MediaEngine/Include/Event/ApplicationEvent.h"
+#include "MediaEngine/Include/Event/KeyEvent.h"
+#include "MediaEngine/Include/Event/MouseEvent.h"
 #include "../WindowLog.h"
+#include "../GlfwUtils.h"
 
 namespace ME
 {
@@ -33,6 +42,7 @@ bool WindowsVulkanWindow::InitWindow(const WindowProps& props)
         return false;
     }
 
+    SetEventCallback();
     return true;
 }
 
@@ -73,4 +83,134 @@ void WindowsVulkanWindow::GLFWErrorCallback(int error, const char* description)
     WND_LOG_ERROR("GLFW Error ({}): {}", error, description);
 }
 
+void WindowsVulkanWindow::SetEventCallback()
+{
+    glfwSetWindowUserPointer(m_Window, &m_Data);
+
+    glfwSetWindowSizeCallback(
+        m_Window,
+        [](GLFWwindow* window, int width, int height)
+        {
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+            data.Width = width;
+            data.Height = height;
+            WindowResizeEvent event(width, height);
+            data.EventCallback(event);
+        });
+
+    glfwSetWindowCloseCallback(
+        m_Window,
+        [](GLFWwindow* window)
+        {
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+            WindowCloseEvent event;
+            data.EventCallback(event);
+        });
+
+    glfwSetKeyCallback(
+        m_Window,
+        [](GLFWwindow* window, int key, int scancode, int action, int mods)
+        {
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+            switch (action)
+            {
+                case GLFW_PRESS:
+                {
+                    KeyCode code = Utils::ConvertGLFWKeycodeToHazelKeycode(key);
+                    KeyPressedEvent event(code, false);
+                    data.EventCallback(event);
+                    break;
+                }
+                case GLFW_RELEASE:
+                {
+                    KeyCode code = Utils::ConvertGLFWKeycodeToHazelKeycode(key);
+                    KeyReleasedEvent event(code);
+                    data.EventCallback(event);
+                    break;
+                }
+                case GLFW_REPEAT:
+                {
+                    KeyCode code = Utils::ConvertGLFWKeycodeToHazelKeycode(key);
+                    KeyPressedEvent event(code, true);
+                    data.EventCallback(event);
+                    break;
+                }
+            }
+        });
+
+    glfwSetCharCallback(
+        m_Window,
+        [](GLFWwindow* window, unsigned int keycode)
+        {
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+            KeyTypedEvent event(keycode);
+            data.EventCallback(event);
+        });
+
+    glfwSetMouseButtonCallback(
+        m_Window,
+        [](GLFWwindow* window, int button, int action, int mods)
+        {
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+            switch (action)
+            {
+                case GLFW_PRESS:
+                {
+                    MouseCode code = Utils::ConvertGLFWMouseButtonToHazelMouseCode(button);
+                    MouseButtonPressedEvent event(code);
+                    data.EventCallback(event);
+                    break;
+                }
+                case GLFW_RELEASE:
+                {
+                    MouseCode code = Utils::ConvertGLFWMouseButtonToHazelMouseCode(button);
+                    MouseButtonReleasedEvent event(code);
+                    data.EventCallback(event);
+                    break;
+                }
+            }
+        });
+
+    glfwSetScrollCallback(
+        m_Window,
+        [](GLFWwindow* window, double xOffset, double yOffset)
+        {
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+            MouseScrolledEvent event((float)xOffset, (float)yOffset);
+            data.EventCallback(event);
+        });
+
+    glfwSetCursorPosCallback(
+        m_Window,
+        [](GLFWwindow* window, double xPos, double yPos)
+        {
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+            MouseMovedEvent event((float)xPos, (float)yPos);
+            data.EventCallback(event);
+        });
+
+    glfwSetDropCallback(
+        m_Window,
+        [](GLFWwindow* window, int count, const char** paths)
+        {
+            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+            std::vector<std::string> dropFiles;
+            if (count >= 1)
+            {
+                dropFiles.reserve(count);
+                for (int i = 0; i < count; ++i)
+                {
+                    dropFiles.emplace_back(paths[i]);
+                }
+            }
+
+            FileDropEvent event(dropFiles);
+            data.EventCallback(event);
+        });
+}
+
 }  //namespace ME
+
+#endif

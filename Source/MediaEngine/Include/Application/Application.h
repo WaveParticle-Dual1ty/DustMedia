@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include "MediaEngine/Include/Window/Window.h"
+#include "MediaEngine/Include/Event/ApplicationEvent.h"
 
 namespace ME
 {
@@ -22,6 +23,8 @@ public:
 private:
     bool InitApp();
     void OnEvent(Event& event);
+    bool OnWindowClosed(WindowCloseEvent& event);
+    bool OnWindowResize(WindowResizeEvent& event);
 
 private:
     ApplicationSpecification m_AppSpec;

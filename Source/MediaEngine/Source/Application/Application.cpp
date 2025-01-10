@@ -53,6 +53,30 @@ bool Application::InitApp()
 
 void Application::OnEvent(Event& event)
 {
+    EventDispatcher dispatcher(event);
+    dispatcher.Dispatch<WindowCloseEvent>(
+        [this](WindowCloseEvent& event) -> bool
+        {
+            return OnWindowClosed(event);
+        });
+
+    dispatcher.Dispatch<WindowResizeEvent>(
+        [this](WindowResizeEvent& event) -> bool
+        {
+            return OnWindowResize(event);
+        });
+}
+
+bool Application::OnWindowClosed(WindowCloseEvent& event)
+{
+    APP_LOG_INFO("Application recieve event: {}", event.ToString());
+    m_Running = false;
+    return false;
+}
+
+bool Application::OnWindowResize(WindowResizeEvent& event)
+{
+    return false;
 }
 
 }  //namespace ME

@@ -21,6 +21,7 @@ public:
 
 private:
     static void GLFWErrorCallback(int error, const char* description);
+    void SetEventCallback();
 
 private:
     struct WindowData
