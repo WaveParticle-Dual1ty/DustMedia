@@ -1,6 +1,7 @@
 ﻿#include "MediaEngine/Include/Application/Application.h"
 #include "MediaEngine/Include/Core/Time.h"
 #include "AppLog.h"
+#include "LayerStack.h"
 
 namespace ME
 {
@@ -21,14 +22,35 @@ void Application::Run()
     while (m_Running)
     {
         Timestep timestep = GetTimestep();
-        //APP_LOG_INFO("Timestep: {}ms", timestep.GetMilliseconds());
 
         m_Window->PollEvents();
+
+        if (m_WndMinimized)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+
+        if (m_WndResized)
+        {
+            // deal
+            m_WndResized = false;
+        }
     }
 
     m_Window->Destroy();
 
     APP_LOG_INFO("Application stop");
+}
+
+void Application::PushLayer(std::shared_ptr<Layer> layer)
+{
+    m_LayerStack->PushLayer(layer);
+}
+
+void Application::PushOverlay(std::shared_ptr<Layer> layer)
+{
+    m_LayerStack->PushOverlay(layer);
 }
 
 bool Application::InitApp()
@@ -51,6 +73,15 @@ bool Application::InitApp()
         {
             OnEvent(event);
         });
+
+    m_LayerStack = std::make_shared<LayerStack>();
+
+    ret = OnEngineInit();
+    if (!ret)
+    {
+        APP_LOG_ERROR("OnEngineInit fail");
+        return false;
+    }
 
     return true;
 }
@@ -77,18 +108,55 @@ void Application::OnEvent(Event& event)
         {
             return OnWindowResize(event);
         });
+
+    const LayerStack::LayerList& layers = m_LayerStack->GetLayers();
+    for (auto it = layers.rbegin(); it != layers.rend(); ++it)
+    {
+        const std::shared_ptr<Layer>& layer = *it;
+        layer->OnEvent(event);
+        if (event.Handled)
+            break;
+    }
 }
 
 bool Application::OnWindowClosed(WindowCloseEvent& event)
 {
-    APP_LOG_INFO("Application recieve event: {}", event.ToString());
+    APP_LOG_INFO("Application receive event: {}", event.ToString());
     m_Running = false;
     return false;
 }
 
 bool Application::OnWindowResize(WindowResizeEvent& event)
 {
+    if (event.GetWidth() == 0 || event.GetHeight() == 0)
+    {
+        APP_LOG_INFO("Application receive minimized event");
+        m_WndMinimized = true;
+        return false;
+    }
+    else
+    {
+        m_WndMinimized = false;
+        m_WndResized = true;
+        return false;
+    }
+
     return false;
+}
+
+void Application::UpdateLayers(Timestep timestep)
+{
+    for (const auto& layer : m_LayerStack->GetLayers())
+    {
+        layer->OnUpdate(timestep);
+    }
+}
+
+void Application::UpdateLayersUI(Timestep timestep)
+{
+    if (m_EnableUI)
+    {
+    }
 }
 
 }  //namespace ME

@@ -7,4 +7,7 @@ class SandboxApp : public ME::Application
 {
 public:
     SandboxApp();
+
+private:
+    virtual bool OnEngineInit() override;
 };

@@ -14,3 +14,8 @@ SandboxApp::SandboxApp()
     : Application({"Sandbox"})
 {
 }
+
+bool SandboxApp::OnEngineInit()
+{
+    return true;
+}

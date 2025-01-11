@@ -4,6 +4,7 @@
 #include "MediaEngine/Include/Core/Timestep.h"
 #include "MediaEngine/Include/Window/Window.h"
 #include "MediaEngine/Include/Event/ApplicationEvent.h"
+#include "Layer.h"
 
 namespace ME
 {
@@ -21,19 +22,32 @@ public:
 public:
     void Run();
 
+protected:
+    void PushLayer(std::shared_ptr<Layer> layer);
+    void PushOverlay(std::shared_ptr<Layer> layer);
+
+private:
+    virtual bool OnEngineInit() = 0;
+
 private:
     bool InitApp();
     Timestep GetTimestep();
     void OnEvent(Event& event);
     bool OnWindowClosed(WindowCloseEvent& event);
     bool OnWindowResize(WindowResizeEvent& event);
+    void UpdateLayers(Timestep timestep);
+    void UpdateLayersUI(Timestep timestep);
 
 private:
     ApplicationSpecification m_AppSpec;
     bool m_Running = true;
+    bool m_WndMinimized = false;
+    bool m_WndResized = false;
     double m_LastFrameTimeInSec = 0.f;
+    bool m_EnableUI = false;
 
     std::shared_ptr<Window> m_Window;
+    std::shared_ptr<class LayerStack> m_LayerStack;
 };
 
 std::unique_ptr<Application> CreateApplication();
