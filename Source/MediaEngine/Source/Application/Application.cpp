@@ -1,4 +1,5 @@
 ﻿#include "MediaEngine/Include/Application/Application.h"
+#include "MediaEngine/Include/Core/Time.h"
 #include "AppLog.h"
 
 namespace ME
@@ -19,6 +20,9 @@ void Application::Run()
 
     while (m_Running)
     {
+        Timestep timestep = GetTimestep();
+        //APP_LOG_INFO("Timestep: {}ms", timestep.GetMilliseconds());
+
         m_Window->PollEvents();
     }
 
@@ -49,6 +53,14 @@ bool Application::InitApp()
         });
 
     return true;
+}
+
+Timestep Application::GetTimestep()
+{
+    float time = Time::GetCurrentTimeInSecond();
+    Timestep timestep = time - m_LastFrameTimeInSec;
+    m_LastFrameTimeInSec = time;
+    return timestep;
 }
 
 void Application::OnEvent(Event& event)
