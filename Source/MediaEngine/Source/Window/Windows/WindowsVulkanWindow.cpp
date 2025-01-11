@@ -27,6 +27,12 @@ bool WindowsVulkanWindow::InitWindow(const WindowProps& props)
         return false;
     }
 
+    int major = 0;
+    int minior = 0;
+    int rev = 0;
+    glfwGetVersion(&major, &minior, &rev);
+    WND_LOG_INFO("Glfw vertsion: {}.{}.{}", major, minior, rev);
+
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     m_Window = glfwCreateWindow(props.Width, props.Height, props.Title.c_str(), nullptr, nullptr);
     if (m_Window == nullptr)
