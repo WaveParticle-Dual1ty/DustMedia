@@ -1,4 +1,6 @@
 ﻿#include "MediaEngine/Include/Application/Application.h"
+#include <thread>
+#include <chrono>
 #include "MediaEngine/Include/Core/Time.h"
 #include "AppLog.h"
 #include "LayerStack.h"
@@ -33,9 +35,26 @@ void Application::Run()
 
         if (m_WndResized)
         {
-            // deal
             m_WndResized = false;
+
+            uint32_t w = m_Window->GetWidth();
+            uint32_t h = m_Window->GetHeight();
+            ret = m_RHI->Resize(w, h);
+            if (!ret)
+            {
+                APP_LOG_ERROR("RHI::Resize fail");
+                break;
+            }
         }
+
+        m_RHI->PrepareForNextFrame();
+
+        m_RHI->BeginCommandBuffer(m_RHI->GetCurrentCommandBuffer());
+        m_RHI->ClearBackBuffer(m_RHI->GetCurrentCommandBuffer(), 0.1, 0.2, 0.3, 1);
+        m_RHI->EndCommandBuffer(m_RHI->GetCurrentCommandBuffer());
+
+        m_RHI->SubmmitRenderCommands();
+        m_RHI->Present();
     }
 
     m_Window->Destroy();
@@ -80,6 +99,14 @@ bool Application::InitApp()
     if (!ret)
     {
         APP_LOG_ERROR("OnEngineInit fail");
+        return false;
+    }
+
+    m_RHI = RHI::CreateRHI(RHI::API::Vulkan);
+    ret = m_RHI->Initialize(m_Window);
+    if (!ret)
+    {
+        APP_LOG_ERROR("RHI::Initialize fail");
         return false;
     }
 

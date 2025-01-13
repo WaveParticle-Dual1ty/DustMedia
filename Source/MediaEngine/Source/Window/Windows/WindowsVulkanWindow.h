@@ -3,7 +3,7 @@
 
 #ifdef ME_PLATFORM_WINDOWS
 
-#include "ThirdParty/glfw/include/GLFW/glfw3.h"
+#include "ThirdParty/glfw-3.4/include/GLFW/glfw3.h"
 #include "MediaEngine/Include/Window/Window.h"
 
 namespace ME

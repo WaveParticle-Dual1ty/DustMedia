@@ -4,6 +4,7 @@
 #include "MediaEngine/Include/Core/Timestep.h"
 #include "MediaEngine/Include/Window/Window.h"
 #include "MediaEngine/Include/Event/ApplicationEvent.h"
+#include "MediaEngine/Include/Render/RHI.h"
 #include "Layer.h"
 
 namespace ME
@@ -48,6 +49,7 @@ private:
 
     std::shared_ptr<Window> m_Window;
     std::shared_ptr<class LayerStack> m_LayerStack;
+    std::shared_ptr<RHI> m_RHI;
 };
 
 std::unique_ptr<Application> CreateApplication();
