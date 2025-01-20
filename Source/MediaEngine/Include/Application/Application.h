@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include "MediaEngine/Include/Core/Timestep.h"
+#include "MediaEngine/Include/Core/Ptr.h"
 #include "MediaEngine/Include/Window/Window.h"
 #include "MediaEngine/Include/Event/ApplicationEvent.h"
 #include "MediaEngine/Include/Render/RHI.h"
@@ -45,10 +46,11 @@ private:
     bool m_WndMinimized = false;
     bool m_WndResized = false;
     double m_LastFrameTimeInSec = 0.f;
-    bool m_EnableUI = false;
+    bool m_EnableUI = true;
 
     std::shared_ptr<Window> m_Window;
     std::shared_ptr<class LayerStack> m_LayerStack;
+    Ref<class ImGuiLayer> m_ImGuiLayer;
     std::shared_ptr<RHI> m_RHI;
 };
 

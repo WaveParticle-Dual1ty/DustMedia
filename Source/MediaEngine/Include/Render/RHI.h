@@ -3,6 +3,7 @@
 #include "MediaEngine/Include/Core/Ptr.h"
 #include "MediaEngine/Include/Window/Window.h"
 #include "RHIResources.h"
+#include "RHITexture.h"
 
 namespace ME
 {
@@ -26,6 +27,8 @@ public:
     virtual bool Present() = 0;
 
     virtual Ref<RHICommandBuffer> GetCurrentCommandBuffer() const = 0;
+
+    virtual Ref<RHITexture2D> CreateTexture2D(RHITexture2DCreateDesc desc) = 0;
 
     virtual bool BeginCommandBuffer(Ref<RHICommandBuffer> commandBuffer) = 0;
     virtual bool EndCommandBuffer(Ref<RHICommandBuffer> commandBuffer) = 0;

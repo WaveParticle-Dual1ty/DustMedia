@@ -30,6 +30,8 @@ public:
 
     virtual Ref<RHICommandBuffer> GetCurrentCommandBuffer() const override;
 
+    virtual Ref<RHITexture2D> CreateTexture2D(RHITexture2DCreateDesc desc) override;
+
     virtual bool BeginCommandBuffer(Ref<RHICommandBuffer> commandBuffer) override;
     virtual bool EndCommandBuffer(Ref<RHICommandBuffer> commandBuffer) override;
 

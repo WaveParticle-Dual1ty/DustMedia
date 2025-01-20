@@ -2,6 +2,7 @@
 #include <thread>
 #include <chrono>
 #include "MediaEngine/Include/Core/Time.h"
+#include "MediaEngine/Source/ImGui/ImGuiLayer.h"
 #include "AppLog.h"
 #include "LayerStack.h"
 
@@ -93,20 +94,31 @@ bool Application::InitApp()
             OnEvent(event);
         });
 
+    RHI::API renderAPI = RHI::API::Vulkan;
+    m_RHI = RHI::CreateRHI(renderAPI);
+    ret = m_RHI->Initialize(m_Window);
+    if (!ret)
+    {
+        APP_LOG_ERROR("RHI::Initialize fail");
+        return false;
+    }
+
     m_LayerStack = std::make_shared<LayerStack>();
+    if (m_EnableUI)
+    {
+        m_ImGuiLayer = ImGuiLayer::Create(renderAPI);
+        if (m_ImGuiLayer == nullptr)
+        {
+            APP_LOG_ERROR("ImGuiLayer::Create fail");
+            return false;
+        }
+        PushOverlay(m_ImGuiLayer);
+    }
 
     ret = OnEngineInit();
     if (!ret)
     {
         APP_LOG_ERROR("OnEngineInit fail");
-        return false;
-    }
-
-    m_RHI = RHI::CreateRHI(RHI::API::Vulkan);
-    ret = m_RHI->Initialize(m_Window);
-    if (!ret)
-    {
-        APP_LOG_ERROR("RHI::Initialize fail");
         return false;
     }
 

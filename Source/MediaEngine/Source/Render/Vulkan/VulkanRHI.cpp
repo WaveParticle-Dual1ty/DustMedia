@@ -213,6 +213,11 @@ Ref<RHICommandBuffer> VulkanRHI::GetCurrentCommandBuffer() const
     return m_RHICommandBuffer;
 }
 
+Ref<RHITexture2D> VulkanRHI::CreateTexture2D(RHITexture2DCreateDesc desc)
+{
+    return Ref<RHITexture2D>();
+}
+
 bool VulkanRHI::BeginCommandBuffer(Ref<RHICommandBuffer> commandBuffer)
 {
     Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
