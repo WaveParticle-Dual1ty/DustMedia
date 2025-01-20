@@ -75,7 +75,7 @@ bool VulkanRHI::Initialize(std::shared_ptr<Window> wnd)
     VkExtent2D extend{w, h};
     ret = CreateSwapchainResources(
         m_Swapchain, m_SwapchainImages, m_ImageAcquiredSemaphores, m_RenderCompleteSemaphores, m_PhysicalDevice,
-        m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, extend, 2);
+        m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, extend, m_MinImageCount);
     m_GraphicSemaphoreCnt = (uint32_t)m_ImageAcquiredSemaphores.size();
 
     return true;
@@ -313,6 +313,36 @@ bool VulkanRHI::ClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, fl
     }
 
     return false;
+}
+
+VkInstance VulkanRHI::GetInstance()
+{
+    return m_Instance;
+}
+
+VkPhysicalDevice VulkanRHI::GetPhysicalDevice()
+{
+    return m_PhysicalDevice;
+}
+
+VkDevice VulkanRHI::GetDevice()
+{
+    return m_Device;
+}
+
+VulkanRHI::VulkanQueue VulkanRHI::GetGraphicQueue()
+{
+    return m_GraphicQueue;
+}
+
+uint32_t VulkanRHI::GetMinImageCount()
+{
+    return m_MinImageCount;
+}
+
+uint32_t VulkanRHI::GetBackImageCount()
+{
+    return (uint32_t)m_SwapchainImages.size();
 }
 
 bool VulkanRHI::IsExtensionAvailable(const std::vector<VkExtensionProperties>& properties, const char* extension)

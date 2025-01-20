@@ -112,6 +112,14 @@ bool Application::InitApp()
             APP_LOG_ERROR("ImGuiLayer::Create fail");
             return false;
         }
+
+        ret = m_ImGuiLayer->Init(m_Window, m_RHI);
+        if (!ret)
+        {
+            APP_LOG_ERROR("ImGuiLayer::Init fail");
+            return false;
+        }
+
         PushOverlay(m_ImGuiLayer);
     }
 

@@ -10,6 +10,7 @@ target_link_libraries(${TARGET_NAME} PRIVATE
     $<$<CONFIG:Release>:${VULKAN_LIBS_RELEASE}>
     Third_spdlog
     Third_glfw
+    Third_imgui
 )
 
 target_include_directories(${TARGET_NAME} PRIVATE

@@ -38,12 +38,19 @@ public:
     // test interface
     virtual bool ClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, float g, float b, float a) override;
 
-private:
+public:
     struct VulkanQueue
     {
         VkQueue Queue = VK_NULL_HANDLE;
         uint32_t QueueFamilyIndex = UINT32_MAX;
     };
+
+    VkInstance GetInstance();
+    VkPhysicalDevice GetPhysicalDevice();
+    VkDevice GetDevice();
+    VulkanQueue GetGraphicQueue();
+    uint32_t GetMinImageCount();
+    uint32_t GetBackImageCount();
 
 private:
     bool IsExtensionAvailable(const std::vector<VkExtensionProperties>& properties, const char* extension);
@@ -101,6 +108,7 @@ private:
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     Ref<VulkanRHICommandBuffer> m_RHICommandBuffer;
     VkFence m_FenceForCommandBuffer = VK_NULL_HANDLE;
+    const uint32_t m_MinImageCount = 2;
     VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
     std::vector<VkImage> m_SwapchainImages;
     uint32_t m_SwapchainFrameIndex = 0;
