@@ -70,7 +70,7 @@ bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi)
     initInfo.QueueFamily = vulkanRHI->GetGraphicQueue().QueueFamilyIndex;
     initInfo.Queue = vulkanRHI->GetGraphicQueue().Queue;
     initInfo.PipelineCache = VK_NULL_HANDLE;
-    initInfo.DescriptorPool = VK_NULL_HANDLE;
+    initInfo.DescriptorPool = vulkanRHI->GetDescriptorPool();
     initInfo.RenderPass = VK_NULL_HANDLE;
     initInfo.Subpass = 0;
     initInfo.MinImageCount = vulkanRHI->GetMinImageCount();

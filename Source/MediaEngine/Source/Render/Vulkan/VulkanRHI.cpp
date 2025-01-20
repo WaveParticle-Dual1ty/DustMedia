@@ -78,6 +78,13 @@ bool VulkanRHI::Initialize(std::shared_ptr<Window> wnd)
         m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, extend, m_MinImageCount);
     m_GraphicSemaphoreCnt = (uint32_t)m_ImageAcquiredSemaphores.size();
 
+    m_DescriptorPool = CreateDescriptorPool(m_Device);
+    if (m_DescriptorPool == VK_NULL_HANDLE)
+    {
+        RENDER_LOG_ERROR("CreateDescriptorPool fail");
+        return false;
+    }
+
     return true;
 }
 
@@ -333,6 +340,11 @@ VkDevice VulkanRHI::GetDevice()
 VulkanRHI::VulkanQueue VulkanRHI::GetGraphicQueue()
 {
     return m_GraphicQueue;
+}
+
+VkDescriptorPool VulkanRHI::GetDescriptorPool()
+{
+    return m_DescriptorPool;
 }
 
 uint32_t VulkanRHI::GetMinImageCount()
@@ -822,6 +834,31 @@ bool VulkanRHI::CreateSwapchainResources(
     }
 
     return true;
+}
+
+VkDescriptorPool VulkanRHI::CreateDescriptorPool(VkDevice device)
+{
+    std::array<VkDescriptorPoolSize, 1> poolSizes = {
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}
+    };
+
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
+    descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    descriptorPoolCreateInfo.pNext = nullptr;
+    descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    descriptorPoolCreateInfo.maxSets = 1;
+    descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
+    descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
+
+    VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+    VkResult result = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
+    if (result != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateDevice fail");
+        return VK_NULL_HANDLE;
+    }
+
+    return descriptorPool;
 }
 
 }  //namespace ME

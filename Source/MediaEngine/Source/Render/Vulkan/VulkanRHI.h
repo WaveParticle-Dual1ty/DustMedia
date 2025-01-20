@@ -49,6 +49,7 @@ public:
     VkPhysicalDevice GetPhysicalDevice();
     VkDevice GetDevice();
     VulkanQueue GetGraphicQueue();
+    VkDescriptorPool GetDescriptorPool();
     uint32_t GetMinImageCount();
     uint32_t GetBackImageCount();
 
@@ -96,12 +97,14 @@ private:
         VkSurfaceKHR surface,
         VkExtent2D extend,
         uint32_t minImageCount);
+    VkDescriptorPool CreateDescriptorPool(VkDevice device);
 
 private:
     VkInstance m_Instance = VK_NULL_HANDLE;
     VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
     VkDevice m_Device = VK_NULL_HANDLE;
+    VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     VulkanQueue m_GraphicQueue;
     VulkanQueue m_PresentQueue;
     VulkanQueue m_ComputeQueue;
