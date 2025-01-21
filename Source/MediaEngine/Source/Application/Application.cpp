@@ -3,6 +3,7 @@
 #include <chrono>
 #include "MediaEngine/Include/Core/Time.h"
 #include "MediaEngine/Source/ImGui/ImGuiLayer.h"
+#include "MediaEngine/Source/ImGui/ImGuiRenderPass.h"
 #include "AppLog.h"
 #include "LayerStack.h"
 
@@ -46,12 +47,46 @@ void Application::Run()
                 APP_LOG_ERROR("RHI::Resize fail");
                 break;
             }
+
+            ret = m_ImGuiRenderPass->Resize(w, h);
+            if (!ret)
+            {
+                APP_LOG_ERROR("ImGuiRenderPass::Resize fail");
+                break;
+            }
         }
 
         m_RHI->PrepareForNextFrame();
 
+        for (auto& layer : m_LayerStack->GetLayers())
+        {
+            layer->OnUpdate(timestep);
+        }
+
+        if (m_EnableUI)
+        {
+            m_ImGuiLayer->Begin();
+
+            for (auto& layer : m_LayerStack->GetLayers())
+            {
+                layer->OnUIUpdate();
+            }
+
+            m_ImGuiLayer->End();
+        }
+
         m_RHI->BeginCommandBuffer(m_RHI->GetCurrentCommandBuffer());
-        m_RHI->ClearBackBuffer(m_RHI->GetCurrentCommandBuffer(), 0.1, 0.2, 0.3, 1);
+
+        m_RHI->CmdClearBackBuffer(m_RHI->GetCurrentCommandBuffer(), 0.1, 0.2, 0.3, 1);
+
+        if (m_EnableUI)
+        {
+            m_ImGuiRenderPass->Draw();
+
+            Ref<RHITexture2D> uiTexture = m_ImGuiRenderPass->GetFramebuffer()->GetTargetTexture(0);
+            m_RHI->CmdCopyTextureToBackbuffer(m_RHI->GetCurrentCommandBuffer(), uiTexture);
+        }
+
         m_RHI->EndCommandBuffer(m_RHI->GetCurrentCommandBuffer());
 
         m_RHI->SubmmitRenderCommands();
@@ -106,6 +141,16 @@ bool Application::InitApp()
     m_LayerStack = std::make_shared<LayerStack>();
     if (m_EnableUI)
     {
+        m_ImGuiRenderPass = CreateRef<ImGuiRenderPass>(m_RHI);
+        uint32_t w = m_Window->GetWidth();
+        uint32_t h = m_Window->GetHeight();
+        ret = m_ImGuiRenderPass->Initialize(w, h);
+        if (!ret)
+        {
+            APP_LOG_ERROR("ImGuiRenderPass::Initialize fail");
+            return false;
+        }
+
         m_ImGuiLayer = ImGuiLayer::Create(renderAPI);
         if (m_ImGuiLayer == nullptr)
         {
@@ -113,7 +158,7 @@ bool Application::InitApp()
             return false;
         }
 
-        ret = m_ImGuiLayer->Init(m_Window, m_RHI);
+        ret = m_ImGuiLayer->Init(m_Window, m_RHI, m_ImGuiRenderPass->GetRHIRenderPass());
         if (!ret)
         {
             APP_LOG_ERROR("ImGuiLayer::Init fail");

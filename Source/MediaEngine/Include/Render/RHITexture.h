@@ -25,8 +25,13 @@ public:
     virtual ~RHITexture2D() = default;
 
 public:
-    virtual uint32_t GetWidth() const = 0;
-    virtual uint32_t GetHeight() const = 0;
+    uint32_t GetWidth() const;
+    uint32_t GetHeight() const;
+
+protected:
+    ERHIPixelFormat m_PixelFormat = ERHIPixelFormat::PF_Unknown;
+    uint32_t m_Width = 0;
+    uint32_t m_Height = 0;
 };
 
 }  //namespace ME

@@ -3,6 +3,9 @@
 #include <array>
 #include "MediaEngine/Include/Core/Assert.h"
 #include "../RenderLog.h"
+#include "VulkanRHIUtils.h"
+#include "VulkanRHITexture.h"
+#include "VulkanRHIFramebuffer.h"
 
 namespace ME
 {
@@ -220,9 +223,232 @@ Ref<RHICommandBuffer> VulkanRHI::GetCurrentCommandBuffer() const
     return m_RHICommandBuffer;
 }
 
-Ref<RHITexture2D> VulkanRHI::CreateTexture2D(RHITexture2DCreateDesc desc)
+Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
 {
-    return Ref<RHITexture2D>();
+    Ref<VulkanRHITexture2D> texture = CreateRef<VulkanRHITexture2D>();
+    texture->m_PixelFormat = desc.PixelFormat;
+    texture->m_Width = desc.Width;
+    texture->m_Height = desc.Height;
+
+    VkFormat format = Util::ConvertERHIPixelFormatToVkFormat(desc.PixelFormat);
+    texture->m_VKFormat = format;
+
+    // create image
+    VkImageCreateInfo imageCreateInfo;
+    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageCreateInfo.pNext = nullptr;
+    imageCreateInfo.flags = 0;
+    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageCreateInfo.format = format;
+    imageCreateInfo.extent = {desc.Width, desc.Height, 1};
+    imageCreateInfo.mipLevels = 1;
+    imageCreateInfo.arrayLayers = 1;
+    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageCreateInfo.queueFamilyIndexCount = 0;
+    imageCreateInfo.pQueueFamilyIndices = nullptr;
+    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    VkResult res = vkCreateImage(m_Device, &imageCreateInfo, nullptr, &texture->m_Image);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateImage fail");
+        return nullptr;
+    }
+
+    // bind image memeory
+    VkMemoryRequirements memRequirement;
+    vkGetImageMemoryRequirements(m_Device, texture->m_Image, &memRequirement);
+
+    VkMemoryAllocateInfo memAlloInfo;
+    memAlloInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memAlloInfo.pNext = nullptr;
+    memAlloInfo.allocationSize = memRequirement.size;
+    memAlloInfo.memoryTypeIndex = 0;
+
+    res = vkAllocateMemory(m_Device, &memAlloInfo, nullptr, &texture->m_DeviceMem);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkAllocateMemory fail");
+        return nullptr;
+    }
+
+    res = vkBindImageMemory(m_Device, texture->m_Image, texture->m_DeviceMem, 0);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkBindImageMemory fail");
+        return nullptr;
+    }
+
+    // create image view
+    VkComponentMapping componentMapping;
+    componentMapping.r = VK_COMPONENT_SWIZZLE_R;
+    componentMapping.g = VK_COMPONENT_SWIZZLE_G;
+    componentMapping.b = VK_COMPONENT_SWIZZLE_B;
+    componentMapping.a = VK_COMPONENT_SWIZZLE_A;
+
+    VkImageSubresourceRange imageSubresourceRange;
+    imageSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageSubresourceRange.baseMipLevel = 0;
+    imageSubresourceRange.levelCount = 1;
+    imageSubresourceRange.baseArrayLayer = 0;
+    imageSubresourceRange.layerCount = 1;
+
+    VkImageViewCreateInfo imageViewCreateInfo;
+    imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    imageViewCreateInfo.pNext = nullptr;
+    imageViewCreateInfo.flags = 0;
+    imageViewCreateInfo.image = texture->m_Image;
+    imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    imageViewCreateInfo.format = format;
+    imageViewCreateInfo.components = componentMapping;
+    imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+    imageViewCreateInfo.subresourceRange.levelCount = 1;
+    imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+    imageViewCreateInfo.subresourceRange.layerCount = 1;
+
+    res = vkCreateImageView(m_Device, &imageViewCreateInfo, nullptr, &texture->m_ImageView);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateImageView fail");
+        return nullptr;
+    }
+
+    return texture;
+}
+
+Ref<RHIRenderPass> VulkanRHI::CreateRHIRenderPass(RHIRenderPassCreateDesc desc)
+{
+    VkAttachmentDescription attachmentDesc;
+    attachmentDesc.flags = 0;
+    attachmentDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
+    attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+    attachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference colorAttachRef;
+    colorAttachRef.attachment = 0;
+    colorAttachRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpassDesc;
+    subpassDesc.flags = 0;
+    subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpassDesc.inputAttachmentCount = 0;
+    subpassDesc.pInputAttachments = nullptr;
+    subpassDesc.colorAttachmentCount = 1;
+    subpassDesc.pColorAttachments = &colorAttachRef;
+    subpassDesc.pResolveAttachments = nullptr;
+    subpassDesc.pDepthStencilAttachment = nullptr;
+    subpassDesc.preserveAttachmentCount = 0;
+    subpassDesc.pPreserveAttachments = nullptr;
+
+    VkRenderPassCreateInfo renderPassCreateInfo;
+    renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassCreateInfo.pNext = nullptr;
+    renderPassCreateInfo.flags = 0;
+    renderPassCreateInfo.attachmentCount = 1;
+    renderPassCreateInfo.pAttachments = &attachmentDesc;
+    renderPassCreateInfo.subpassCount = 1;
+    renderPassCreateInfo.pSubpasses = &subpassDesc;
+    renderPassCreateInfo.dependencyCount = 0;
+    renderPassCreateInfo.pDependencies = nullptr;
+
+    Ref<VulkanRHIRenderPass> renderPass = CreateRef<VulkanRHIRenderPass>();
+    VkResult res = vkCreateRenderPass(m_Device, &renderPassCreateInfo, nullptr, &renderPass->RenderPass);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateRenderPass fail");
+        return nullptr;
+    }
+
+    return renderPass;
+}
+
+Ref<RHIFramebuffer> VulkanRHI::CreateRHIFramebuffer(
+    uint32_t width,
+    uint32_t height,
+    Ref<RHIRenderPass> renderPass,
+    std::vector<Ref<RHITexture2D>>& textures)
+{
+    ME_ASSERT(textures.size() > 0, "No textures");
+
+    Ref<VulkanRHIFrameBuffer> framebuffer = CreateRef<VulkanRHIFrameBuffer>();
+    framebuffer->m_Width = width;
+    framebuffer->m_Height = height;
+    framebuffer->m_RenderPass = renderPass;
+    framebuffer->m_Textures = textures;
+
+    Ref<VulkanRHIRenderPass> vulkanRenderPass = std::dynamic_pointer_cast<VulkanRHIRenderPass>(renderPass);
+
+    std::vector<VkImageView> imageViews;
+    imageViews.resize(textures.size());
+    for (size_t i = 0; i < textures.size(); ++i)
+    {
+        Ref<VulkanRHITexture2D> vulkanTex = std::dynamic_pointer_cast<VulkanRHITexture2D>(textures[i]);
+        imageViews[i] = vulkanTex->m_ImageView;
+    }
+
+    VkFramebufferCreateInfo framebufferCreateInfo;
+    framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferCreateInfo.pNext = nullptr;
+    framebufferCreateInfo.flags = 0;
+    framebufferCreateInfo.renderPass = vulkanRenderPass->RenderPass;
+    framebufferCreateInfo.attachmentCount = imageViews.size();
+    framebufferCreateInfo.pAttachments = imageViews.data();
+    framebufferCreateInfo.width = width;
+    framebufferCreateInfo.height = height;
+    framebufferCreateInfo.layers = 1;
+
+    VkResult res = vkCreateFramebuffer(m_Device, &framebufferCreateInfo, nullptr, &framebuffer->m_Framebuffer);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateFramebuffer fail");
+        return nullptr;
+    }
+
+    return framebuffer;
+}
+
+void VulkanRHI::DestroyRHITexture2D(Ref<RHITexture2D> texture)
+{
+    Ref<VulkanRHITexture2D> vulkanTexture = std::dynamic_pointer_cast<VulkanRHITexture2D>(texture);
+    vulkanTexture->m_PixelFormat = ERHIPixelFormat::PF_Unknown;
+    vulkanTexture->m_Width = 0;
+    vulkanTexture->m_Height = 0;
+    vulkanTexture->m_VKFormat = VK_FORMAT_UNDEFINED;
+
+    vkDestroyImageView(m_Device, vulkanTexture->m_ImageView, nullptr);
+    vulkanTexture->m_ImageView = VK_NULL_HANDLE;
+    vkFreeMemory(m_Device, vulkanTexture->m_DeviceMem, nullptr);
+    vulkanTexture->m_DeviceMem = VK_NULL_HANDLE;
+    vkDestroyImage(m_Device, vulkanTexture->m_Image, nullptr);
+    vulkanTexture->m_Image = VK_NULL_HANDLE;
+}
+
+void VulkanRHI::DestroyRHIRenderPass(Ref<RHIRenderPass> renderPass)
+{
+    Ref<VulkanRHIRenderPass> vulkanRenderPass = std::dynamic_pointer_cast<VulkanRHIRenderPass>(renderPass);
+    vkDestroyRenderPass(m_Device, vulkanRenderPass->RenderPass, nullptr);
+    vulkanRenderPass->RenderPass = VK_NULL_HANDLE;
+}
+
+void VulkanRHI::DestroyRHIFramebuffer(Ref<RHIFramebuffer> framebuffer)
+{
+    Ref<VulkanRHIFrameBuffer> vulkanFramebuffer = std::dynamic_pointer_cast<VulkanRHIFrameBuffer>(framebuffer);
+    vulkanFramebuffer->m_Width = 0;
+    vulkanFramebuffer->m_Height = 0;
+    vulkanFramebuffer->m_RenderPass = nullptr;
+    vulkanFramebuffer->m_Textures.resize(0);
+
+    vkDestroyFramebuffer(m_Device, vulkanFramebuffer->m_Framebuffer, nullptr);
+    vulkanFramebuffer->m_Framebuffer = VK_NULL_HANDLE;
 }
 
 bool VulkanRHI::BeginCommandBuffer(Ref<RHICommandBuffer> commandBuffer)
@@ -256,7 +482,41 @@ bool VulkanRHI::EndCommandBuffer(Ref<RHICommandBuffer> commandBuffer)
     return true;
 }
 
-bool VulkanRHI::ClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, float g, float b, float a)
+void VulkanRHI::CmdBeginRenderPass(Ref<RHICommandBuffer> commandBuffer, RHIRenderPassBeginInfo beginIhfo)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
+    Ref<VulkanRHIRenderPass> renderPass = std::dynamic_pointer_cast<VulkanRHIRenderPass>(beginIhfo.RenderPass);
+    Ref<VulkanRHIFrameBuffer> framebuffer = std::dynamic_pointer_cast<VulkanRHIFrameBuffer>(beginIhfo.Framebuffer);
+
+    VkRect2D renderArea;
+    renderArea.offset = {beginIhfo.RenderArea.OffsetX, beginIhfo.RenderArea.OffsetY};
+    renderArea.extent = {beginIhfo.RenderArea.Width, beginIhfo.RenderArea.Height};
+
+    VkClearValue clearValue;
+    clearValue.color.float32[0] = beginIhfo.ColorClearValue.R;
+    clearValue.color.float32[1] = beginIhfo.ColorClearValue.G;
+    clearValue.color.float32[2] = beginIhfo.ColorClearValue.B;
+    clearValue.color.float32[3] = beginIhfo.ColorClearValue.A;
+
+    VkRenderPassBeginInfo renderPassBeginInfo;
+    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassBeginInfo.pNext = nullptr;
+    renderPassBeginInfo.renderPass = renderPass->RenderPass;
+    renderPassBeginInfo.framebuffer = framebuffer->m_Framebuffer;
+    renderPassBeginInfo.renderArea = renderArea;
+    renderPassBeginInfo.clearValueCount = 1;
+    renderPassBeginInfo.pClearValues = &clearValue;
+
+    vkCmdBeginRenderPass(vulkanCmdBuffer->CommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void VulkanRHI::CmdEndRenderPass(Ref<RHICommandBuffer> commandBuffer)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
+    vkCmdEndRenderPass(vulkanCmdBuffer->CommandBuffer);
+}
+
+bool VulkanRHI::CmdClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, float g, float b, float a)
 {
     Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
     VkCommandBuffer cmdBuffer = vulkanCmdBuffer->CommandBuffer;
@@ -297,13 +557,81 @@ bool VulkanRHI::ClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, fl
     subresRange.layerCount = 1;
     vkCmdClearColorImage(cmdBuffer, swapchainImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &subresRange);
 
+    //{
+    //    VkImageMemoryBarrier barrier;
+    //    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    //    barrier.pNext = nullptr;
+    //    barrier.srcAccessMask = 0;
+    //    barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    //    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    //    barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    //    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    //    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    //    barrier.image = swapchainImage;
+    //    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    //    barrier.subresourceRange.baseMipLevel = 0;
+    //    barrier.subresourceRange.levelCount = 1;
+    //    barrier.subresourceRange.baseArrayLayer = 0;
+    //    barrier.subresourceRange.layerCount = 1;
+
+    //    VkPipelineStageFlags pipeLineSrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    //    VkPipelineStageFlags pipeLineDstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    //    vkCmdPipelineBarrier(cmdBuffer, pipeLineSrcStage, pipeLineDstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    //}
+
+    return true;
+}
+
+bool VulkanRHI::CmdCopyTextureToBackbuffer(Ref<RHICommandBuffer> commandBuffer, Ref<RHITexture2D> source)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
+    Ref<VulkanRHITexture2D> vulkanTex = std::dynamic_pointer_cast<VulkanRHITexture2D>(source);
+    VkImage swapchainImage = m_SwapchainImages[m_SwapchainFrameIndex];
+
     {
         VkImageMemoryBarrier barrier;
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         barrier.pNext = nullptr;
         barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = vulkanTex->m_Image;
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        barrier.subresourceRange.baseMipLevel = 0;
+        barrier.subresourceRange.levelCount = 1;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = 1;
+
+        VkPipelineStageFlags pipeLineSrcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        VkPipelineStageFlags pipeLineDstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        vkCmdPipelineBarrier(
+            vulkanCmdBuffer->CommandBuffer, pipeLineSrcStage, pipeLineDstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    }
+
+    VkImageCopy imageCopy;
+    imageCopy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageCopy.srcSubresource.mipLevel = 0;
+    imageCopy.srcSubresource.baseArrayLayer = 0;
+    imageCopy.srcSubresource.layerCount = 1;
+    imageCopy.srcOffset = {0, 0, 0};
+    imageCopy.dstSubresource = imageCopy.srcSubresource;
+    imageCopy.dstOffset = {0, 0, 0};
+    imageCopy.extent = {vulkanTex->GetWidth(), vulkanTex->GetHeight(), 1};
+
+    vkCmdCopyImage(
+        vulkanCmdBuffer->CommandBuffer, vulkanTex->m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, swapchainImage,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+
+    {
+        VkImageMemoryBarrier barrier;
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.pNext = nullptr;
+        barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -314,12 +642,13 @@ bool VulkanRHI::ClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, fl
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount = 1;
 
-        VkPipelineStageFlags pipeLineSrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        VkPipelineStageFlags pipeLineDstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        vkCmdPipelineBarrier(cmdBuffer, pipeLineSrcStage, pipeLineDstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+        VkPipelineStageFlags pipeLineSrcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        VkPipelineStageFlags pipeLineDstStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        vkCmdPipelineBarrier(
+            vulkanCmdBuffer->CommandBuffer, pipeLineSrcStage, pipeLineDstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
     }
 
-    return false;
+    return true;
 }
 
 VkInstance VulkanRHI::GetInstance()

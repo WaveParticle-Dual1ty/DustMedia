@@ -4,6 +4,7 @@
 #include "ThirdParty/imgui/backends/imgui_impl_vulkan.h"
 #include "ThirdParty/glfw-3.4/include/GLFW/glfw3.h"
 #include "MediaEngine/Source/Render/Vulkan/VulkanRHI.h"
+#include "MediaEngine/Source/Render/Vulkan/VulkanRHIResources.h"
 #include "../ImGuiLog.h"
 
 namespace ME
@@ -27,13 +28,16 @@ void VulkanImGuiLayer::OnUpdate(Timestep timestep)
 
 void VulkanImGuiLayer::OnUIUpdate()
 {
+    bool showDemoWindow = true;
+    if (showDemoWindow)
+        ImGui::ShowDemoWindow(&showDemoWindow);
 }
 
 void VulkanImGuiLayer::OnEvent(Event& event)
 {
 }
 
-bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi)
+bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> rhiRenderPass)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -54,6 +58,7 @@ bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi)
     }
 
     Ref<VulkanRHI> vulkanRHI = std::dynamic_pointer_cast<VulkanRHI>(rhi);
+    Ref<VulkanRHIRenderPass> vulkanRHIRenderPass = std::dynamic_pointer_cast<VulkanRHIRenderPass>(rhiRenderPass);
     GLFWwindow* glfwWnd = (GLFWwindow*)wnd->GetNativeWindow();
 
     bool ret = ImGui_ImplGlfw_InitForVulkan(glfwWnd, true);
@@ -71,7 +76,7 @@ bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi)
     initInfo.Queue = vulkanRHI->GetGraphicQueue().Queue;
     initInfo.PipelineCache = VK_NULL_HANDLE;
     initInfo.DescriptorPool = vulkanRHI->GetDescriptorPool();
-    initInfo.RenderPass = VK_NULL_HANDLE;
+    initInfo.RenderPass = vulkanRHIRenderPass->RenderPass;
     initInfo.Subpass = 0;
     initInfo.MinImageCount = vulkanRHI->GetMinImageCount();
     initInfo.ImageCount = vulkanRHI->GetBackImageCount();
@@ -90,10 +95,21 @@ bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi)
 
 void VulkanImGuiLayer::Begin()
 {
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
 }
 
 void VulkanImGuiLayer::End()
 {
+    ImGui::Render();
+
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+    }
 }
 
 void VulkanImGuiLayer::CheckVkResult(VkResult err)

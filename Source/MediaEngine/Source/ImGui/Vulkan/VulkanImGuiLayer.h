@@ -16,7 +16,7 @@ public:
     virtual void OnUIUpdate() override;
     virtual void OnEvent(Event& event) override;
 
-    virtual bool Init(Ref<Window> wnd, Ref<RHI> rhi) override;
+    virtual bool Init(Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> rhiRenderPass) override;
     virtual void Begin() override;
     virtual void End() override;
 

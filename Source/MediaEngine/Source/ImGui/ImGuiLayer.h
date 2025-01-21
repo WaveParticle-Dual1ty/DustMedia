@@ -3,6 +3,7 @@
 #include "MediaEngine/Include/Core/Ptr.h"
 #include "MediaEngine/Include/Application/Layer.h"
 #include "MediaEngine/Include/Render/RHI.h"
+#include "MediaEngine/Include/Render/RHIResources.h"
 #include "MediaEngine/Include/Window/Window.h"
 
 namespace ME
@@ -15,7 +16,7 @@ public:
     static Ref<ImGuiLayer> Create(RHI::API api);
 
 public:
-    virtual bool Init(Ref<Window> wnd, Ref<RHI> rhi) = 0;
+    virtual bool Init(Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> rhiRenderPass) = 0;
     virtual void Begin() = 0;
     virtual void End() = 0;
 };

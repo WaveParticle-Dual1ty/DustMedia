@@ -51,6 +51,7 @@ private:
     std::shared_ptr<Window> m_Window;
     std::shared_ptr<class LayerStack> m_LayerStack;
     Ref<class ImGuiLayer> m_ImGuiLayer;
+    Ref<class ImGuiRenderPass> m_ImGuiRenderPass;
     std::shared_ptr<RHI> m_RHI;
 };
 

@@ -30,13 +30,28 @@ public:
 
     virtual Ref<RHICommandBuffer> GetCurrentCommandBuffer() const override;
 
-    virtual Ref<RHITexture2D> CreateTexture2D(RHITexture2DCreateDesc desc) override;
+    // Resources
+    virtual Ref<RHITexture2D> CreateRHITexture2D(RHITexture2DCreateDesc desc) override;
+    virtual Ref<RHIRenderPass> CreateRHIRenderPass(RHIRenderPassCreateDesc desc) override;
+    virtual Ref<RHIFramebuffer> CreateRHIFramebuffer(
+        uint32_t width,
+        uint32_t height,
+        Ref<RHIRenderPass> renderPass,
+        std::vector<Ref<RHITexture2D>>& textures) override;
 
+    virtual void DestroyRHITexture2D(Ref<RHITexture2D> texture) override;
+    virtual void DestroyRHIRenderPass(Ref<RHIRenderPass> renderPass) override;
+    virtual void DestroyRHIFramebuffer(Ref<RHIFramebuffer> framebuffer) override;
+
+    // Command
     virtual bool BeginCommandBuffer(Ref<RHICommandBuffer> commandBuffer) override;
     virtual bool EndCommandBuffer(Ref<RHICommandBuffer> commandBuffer) override;
+    virtual void CmdBeginRenderPass(Ref<RHICommandBuffer> commandBuffer, RHIRenderPassBeginInfo beginIhfo) override;
+    virtual void CmdEndRenderPass(Ref<RHICommandBuffer> commandBuffer) override;
 
     // test interface
-    virtual bool ClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, float g, float b, float a) override;
+    virtual bool CmdClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, float g, float b, float a) override;
+    virtual bool CmdCopyTextureToBackbuffer(Ref<RHICommandBuffer> commandBuffer, Ref<RHITexture2D> source) override;
 
 public:
     struct VulkanQueue
