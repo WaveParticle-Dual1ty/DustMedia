@@ -75,19 +75,51 @@ void Application::Run()
             m_ImGuiLayer->End();
         }
 
-        m_RHI->BeginCommandBuffer(m_RHI->GetCurrentCommandBuffer());
+        Ref<RHICommandBuffer> cmdBuffer = m_RHI->GetCurrentCommandBuffer();
 
-        m_RHI->CmdClearBackBuffer(m_RHI->GetCurrentCommandBuffer(), 0.1, 0.2, 0.3, 1);
+        m_RHI->BeginCommandBuffer(cmdBuffer);
+
+        Ref<RHITexture2D> backTexture = m_RHI->GetCurrentBackTexture();
+
+        m_RHI->CmdPipelineBarrier(
+            cmdBuffer,
+            RHIPipelineBarrierInfo(
+                backTexture, ERHIAccessFlag::RHI_ACCESS_NONE, ERHIAccessFlag::RHI_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                ERHIImageLayout::RHI_IMAGE_LAYOUT_UNDEFINED, ERHIImageLayout::RHI_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                ERHIImageAspectFlag::RHI_IMAGE_ASPECT_COLOR_BIT));
+        m_RHI->CmdClearColor(cmdBuffer, backTexture, RHIColor(0, 0, 0, 1));
 
         if (m_EnableUI)
         {
             m_ImGuiRenderPass->Draw();
 
             Ref<RHITexture2D> uiTexture = m_ImGuiRenderPass->GetFramebuffer()->GetTargetTexture(0);
-            m_RHI->CmdCopyTextureToBackbuffer(m_RHI->GetCurrentCommandBuffer(), uiTexture);
+
+            m_RHI->CmdPipelineBarrier(
+                cmdBuffer, RHIPipelineBarrierInfo(
+                               uiTexture, ERHIAccessFlag::RHI_ACCESS_NONE, ERHIAccessFlag::RHI_ACCESS_TRANSFER_READ_BIT,
+                               ERHIImageLayout::RHI_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                               ERHIImageLayout::RHI_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                               ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                               ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_TRANSFER_BIT,
+                               ERHIImageAspectFlag::RHI_IMAGE_ASPECT_COLOR_BIT));
+
+            m_RHI->CmdCopyTexture(cmdBuffer, uiTexture, backTexture);
         }
 
-        m_RHI->EndCommandBuffer(m_RHI->GetCurrentCommandBuffer());
+        m_RHI->CmdPipelineBarrier(
+            cmdBuffer,
+            RHIPipelineBarrierInfo(
+                backTexture, ERHIAccessFlag::RHI_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                ERHIAccessFlag::RHI_ACCESS_MEMORY_READ_BIT, ERHIImageLayout::RHI_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                ERHIImageLayout::RHI_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                ERHIImageAspectFlag::RHI_IMAGE_ASPECT_COLOR_BIT));
+
+        m_RHI->EndCommandBuffer(cmdBuffer);
 
         m_RHI->SubmmitRenderCommands();
         m_RHI->Present();

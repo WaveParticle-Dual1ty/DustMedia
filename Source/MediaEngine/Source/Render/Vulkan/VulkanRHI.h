@@ -16,6 +16,7 @@
 
 #include "MediaEngine/Include/Core/Ptr.h"
 #include "VulkanRHIResources.h"
+#include "VulkanRHITexture.h"
 
 namespace ME
 {
@@ -29,6 +30,7 @@ public:
     virtual bool Present() override;
 
     virtual Ref<RHICommandBuffer> GetCurrentCommandBuffer() const override;
+    virtual Ref<RHITexture2D> GetCurrentBackTexture() override;
 
     // Resources
     virtual Ref<RHITexture2D> CreateRHITexture2D(RHITexture2DCreateDesc desc) override;
@@ -44,14 +46,13 @@ public:
     virtual void DestroyRHIFramebuffer(Ref<RHIFramebuffer> framebuffer) override;
 
     // Command
-    virtual bool BeginCommandBuffer(Ref<RHICommandBuffer> commandBuffer) override;
-    virtual bool EndCommandBuffer(Ref<RHICommandBuffer> commandBuffer) override;
-    virtual void CmdBeginRenderPass(Ref<RHICommandBuffer> commandBuffer, RHIRenderPassBeginInfo beginIhfo) override;
-    virtual void CmdEndRenderPass(Ref<RHICommandBuffer> commandBuffer) override;
-
-    // test interface
-    virtual bool CmdClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, float g, float b, float a) override;
-    virtual bool CmdCopyTextureToBackbuffer(Ref<RHICommandBuffer> commandBuffer, Ref<RHITexture2D> source) override;
+    virtual bool BeginCommandBuffer(Ref<RHICommandBuffer> cmdBuffer) override;
+    virtual bool EndCommandBuffer(Ref<RHICommandBuffer> cmdBuffer) override;
+    virtual void CmdBeginRenderPass(Ref<RHICommandBuffer> cmdBuffer, RHIRenderPassBeginInfo beginIhfo) override;
+    virtual void CmdEndRenderPass(Ref<RHICommandBuffer> cmdBuffer) override;
+    virtual void CmdClearColor(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> texture, RHIColor color) override;
+    virtual void CmdPipelineBarrier(Ref<RHICommandBuffer> cmdBuffer, RHIPipelineBarrierInfo barrierInfo) override;
+    virtual void CmdCopyTexture(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> src, Ref<RHITexture2D> dst) override;
 
 public:
     struct VulkanQueue
@@ -102,7 +103,7 @@ private:
     std::vector<VkPresentModeKHR> GetSupportPresentModes(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
     bool CreateSwapchainResources(
         VkSwapchainKHR& swapchain,
-        std::vector<VkImage>& swapchainImages,
+        std::vector<Ref<VulkanRHITexture2D>>& swapchainTextures,
         std::vector<VkSemaphore>& imageAcquiredSemaphores,
         std::vector<VkSemaphore>& renderCompleteSemaphores,
         VkPhysicalDevice physicalDevie,
@@ -128,7 +129,7 @@ private:
     VkFence m_FenceForCommandBuffer = VK_NULL_HANDLE;
     const uint32_t m_MinImageCount = 2;
     VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
-    std::vector<VkImage> m_SwapchainImages;
+    std::vector<Ref<VulkanRHITexture2D>> m_SwapchainTextures;
     uint32_t m_SwapchainFrameIndex = 0;
     std::vector<VkSemaphore> m_ImageAcquiredSemaphores;
     std::vector<VkSemaphore> m_RenderCompleteSemaphores;

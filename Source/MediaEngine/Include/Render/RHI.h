@@ -29,6 +29,7 @@ public:
     virtual bool Present() = 0;
 
     virtual Ref<RHICommandBuffer> GetCurrentCommandBuffer() const = 0;
+    virtual Ref<RHITexture2D> GetCurrentBackTexture() = 0;
 
     // Resources
     virtual Ref<RHITexture2D> CreateRHITexture2D(RHITexture2DCreateDesc desc) = 0;
@@ -44,13 +45,12 @@ public:
     virtual void DestroyRHIFramebuffer(Ref<RHIFramebuffer> framebuffer) = 0;
 
     // Command
-    virtual bool BeginCommandBuffer(Ref<RHICommandBuffer> commandBuffer) = 0;
-    virtual bool EndCommandBuffer(Ref<RHICommandBuffer> commandBuffer) = 0;
-    virtual void CmdBeginRenderPass(Ref<RHICommandBuffer> commandBuffer, RHIRenderPassBeginInfo beginIhfo) = 0;
-    virtual void CmdEndRenderPass(Ref<RHICommandBuffer> commandBuffer) = 0;
-
-    // test interface
-    virtual bool CmdClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, float g, float b, float a) = 0;
-    virtual bool CmdCopyTextureToBackbuffer(Ref<RHICommandBuffer> commandBuffer, Ref<RHITexture2D> source) = 0;
+    virtual bool BeginCommandBuffer(Ref<RHICommandBuffer> cmdBuffer) = 0;
+    virtual bool EndCommandBuffer(Ref<RHICommandBuffer> cmdBuffer) = 0;
+    virtual void CmdBeginRenderPass(Ref<RHICommandBuffer> cmdBuffer, RHIRenderPassBeginInfo beginIhfo) = 0;
+    virtual void CmdEndRenderPass(Ref<RHICommandBuffer> cmdBuffer) = 0;
+    virtual void CmdClearColor(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> texture, RHIColor color) = 0;
+    virtual void CmdPipelineBarrier(Ref<RHICommandBuffer> cmdBuffer, RHIPipelineBarrierInfo barrierInfo) = 0;
+    virtual void CmdCopyTexture(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> src, Ref<RHITexture2D> dst) = 0;
 };
 }  //namespace ME

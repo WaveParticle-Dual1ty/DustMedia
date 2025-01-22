@@ -4,7 +4,6 @@
 #include "MediaEngine/Include/Core/Assert.h"
 #include "../RenderLog.h"
 #include "VulkanRHIUtils.h"
-#include "VulkanRHITexture.h"
 #include "VulkanRHIFramebuffer.h"
 
 namespace ME
@@ -77,7 +76,7 @@ bool VulkanRHI::Initialize(std::shared_ptr<Window> wnd)
     uint32_t h = wnd->GetWidth();
     VkExtent2D extend{w, h};
     ret = CreateSwapchainResources(
-        m_Swapchain, m_SwapchainImages, m_ImageAcquiredSemaphores, m_RenderCompleteSemaphores, m_PhysicalDevice,
+        m_Swapchain, m_SwapchainTextures, m_ImageAcquiredSemaphores, m_RenderCompleteSemaphores, m_PhysicalDevice,
         m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, extend, m_MinImageCount);
     m_GraphicSemaphoreCnt = (uint32_t)m_ImageAcquiredSemaphores.size();
 
@@ -114,14 +113,14 @@ bool VulkanRHI::Resize(uint32_t width, uint32_t height)
         m_RenderCompleteSemaphores.resize(0);
     }
 
-    m_SwapchainImages.resize(0);
+    m_SwapchainTextures.resize(0);
 
     vkDestroySwapchainKHR(m_Device, m_Swapchain, VK_NULL_HANDLE);
     m_Swapchain = VK_NULL_HANDLE;
 
     VkExtent2D extend{width, height};
     bool ret = CreateSwapchainResources(
-        m_Swapchain, m_SwapchainImages, m_ImageAcquiredSemaphores, m_RenderCompleteSemaphores, m_PhysicalDevice,
+        m_Swapchain, m_SwapchainTextures, m_ImageAcquiredSemaphores, m_RenderCompleteSemaphores, m_PhysicalDevice,
         m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, extend, 2);
     m_GraphicSemaphoreCnt = (uint32_t)m_ImageAcquiredSemaphores.size();
 
@@ -221,6 +220,12 @@ bool VulkanRHI::Present()
 Ref<RHICommandBuffer> VulkanRHI::GetCurrentCommandBuffer() const
 {
     return m_RHICommandBuffer;
+}
+
+Ref<RHITexture2D> VulkanRHI::GetCurrentBackTexture()
+{
+    Ref<VulkanRHITexture2D> currentTex = m_SwapchainTextures[m_SwapchainFrameIndex];
+    return currentTex;
 }
 
 Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
@@ -451,9 +456,9 @@ void VulkanRHI::DestroyRHIFramebuffer(Ref<RHIFramebuffer> framebuffer)
     vulkanFramebuffer->m_Framebuffer = VK_NULL_HANDLE;
 }
 
-bool VulkanRHI::BeginCommandBuffer(Ref<RHICommandBuffer> commandBuffer)
+bool VulkanRHI::BeginCommandBuffer(Ref<RHICommandBuffer> cmdBuffer)
 {
-    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
 
     VkCommandBufferBeginInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -468,9 +473,9 @@ bool VulkanRHI::BeginCommandBuffer(Ref<RHICommandBuffer> commandBuffer)
     return true;
 }
 
-bool VulkanRHI::EndCommandBuffer(Ref<RHICommandBuffer> commandBuffer)
+bool VulkanRHI::EndCommandBuffer(Ref<RHICommandBuffer> cmdBuffer)
 {
-    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
 
     VkResult err = vkEndCommandBuffer(vulkanCmdBuffer->CommandBuffer);
     if (err != VK_SUCCESS)
@@ -482,9 +487,9 @@ bool VulkanRHI::EndCommandBuffer(Ref<RHICommandBuffer> commandBuffer)
     return true;
 }
 
-void VulkanRHI::CmdBeginRenderPass(Ref<RHICommandBuffer> commandBuffer, RHIRenderPassBeginInfo beginIhfo)
+void VulkanRHI::CmdBeginRenderPass(Ref<RHICommandBuffer> cmdBuffer, RHIRenderPassBeginInfo beginIhfo)
 {
-    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
     Ref<VulkanRHIRenderPass> renderPass = std::dynamic_pointer_cast<VulkanRHIRenderPass>(beginIhfo.RenderPass);
     Ref<VulkanRHIFrameBuffer> framebuffer = std::dynamic_pointer_cast<VulkanRHIFrameBuffer>(beginIhfo.Framebuffer);
 
@@ -510,106 +515,79 @@ void VulkanRHI::CmdBeginRenderPass(Ref<RHICommandBuffer> commandBuffer, RHIRende
     vkCmdBeginRenderPass(vulkanCmdBuffer->CommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void VulkanRHI::CmdEndRenderPass(Ref<RHICommandBuffer> commandBuffer)
+void VulkanRHI::CmdEndRenderPass(Ref<RHICommandBuffer> cmdBuffer)
 {
-    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
     vkCmdEndRenderPass(vulkanCmdBuffer->CommandBuffer);
 }
 
-bool VulkanRHI::CmdClearBackBuffer(Ref<RHICommandBuffer> commandBuffer, float r, float g, float b, float a)
+void VulkanRHI::CmdClearColor(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> texture, RHIColor color)
 {
-    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
-    VkCommandBuffer cmdBuffer = vulkanCmdBuffer->CommandBuffer;
-    VkImage swapchainImage = m_SwapchainImages[m_SwapchainFrameIndex];
-
-    {
-        VkImageMemoryBarrier barrier;
-        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.pNext = nullptr;
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = swapchainImage;
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = 1;
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = 1;
-
-        VkPipelineStageFlags pipeLineSrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        VkPipelineStageFlags pipeLineDstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        vkCmdPipelineBarrier(cmdBuffer, pipeLineSrcStage, pipeLineDstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-    }
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    Ref<VulkanRHITexture2D> vulkanTexture = std::dynamic_pointer_cast<VulkanRHITexture2D>(texture);
 
     VkClearColorValue clearColor;
-    clearColor.float32[0] = r;
-    clearColor.float32[1] = g;
-    clearColor.float32[2] = b;
-    clearColor.float32[3] = a;
+    clearColor.float32[0] = color.R;
+    clearColor.float32[1] = color.G;
+    clearColor.float32[2] = color.B;
+    clearColor.float32[3] = color.A;
+
     VkImageSubresourceRange subresRange;
     subresRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     subresRange.baseMipLevel = 0;
     subresRange.levelCount = 1;
     subresRange.baseArrayLayer = 0;
     subresRange.layerCount = 1;
-    vkCmdClearColorImage(cmdBuffer, swapchainImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &subresRange);
 
-    //{
-    //    VkImageMemoryBarrier barrier;
-    //    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    //    barrier.pNext = nullptr;
-    //    barrier.srcAccessMask = 0;
-    //    barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-    //    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    //    barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    //    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    //    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    //    barrier.image = swapchainImage;
-    //    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    //    barrier.subresourceRange.baseMipLevel = 0;
-    //    barrier.subresourceRange.levelCount = 1;
-    //    barrier.subresourceRange.baseArrayLayer = 0;
-    //    barrier.subresourceRange.layerCount = 1;
-
-    //    VkPipelineStageFlags pipeLineSrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    //    VkPipelineStageFlags pipeLineDstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    //    vkCmdPipelineBarrier(cmdBuffer, pipeLineSrcStage, pipeLineDstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-    //}
-
-    return true;
+    vkCmdClearColorImage(
+        vulkanCmdBuffer->CommandBuffer, vulkanTexture->m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1,
+        &subresRange);
 }
 
-bool VulkanRHI::CmdCopyTextureToBackbuffer(Ref<RHICommandBuffer> commandBuffer, Ref<RHITexture2D> source)
+void VulkanRHI::CmdPipelineBarrier(Ref<RHICommandBuffer> cmdBuffer, RHIPipelineBarrierInfo barrierInfo)
 {
-    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(commandBuffer);
-    Ref<VulkanRHITexture2D> vulkanTex = std::dynamic_pointer_cast<VulkanRHITexture2D>(source);
-    VkImage swapchainImage = m_SwapchainImages[m_SwapchainFrameIndex];
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
 
+    if (barrierInfo.Type == RHIPipelineBarrierInfo::EType::Texture)
     {
+        Ref<VulkanRHITexture2D> texture = std::dynamic_pointer_cast<VulkanRHITexture2D>(barrierInfo.Texture);
+
         VkImageMemoryBarrier barrier;
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         barrier.pNext = nullptr;
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = vulkanTex->m_Image;
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = 1;
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = 1;
+        barrier.srcAccessMask = Util::ConvertERHIAccessFlagToVkAccessFlags(barrierInfo.SrcAcessFlag);
+        barrier.dstAccessMask = Util::ConvertERHIAccessFlagToVkAccessFlags(barrierInfo.DstAcessFlag);
+        barrier.oldLayout = Util::ConvertERHIImageLayoutToVkImageLayout(barrierInfo.OldLayout);
+        barrier.newLayout = Util::ConvertERHIImageLayoutToVkImageLayout(barrierInfo.NewLayout);
+        barrier.srcQueueFamilyIndex = barrierInfo.SrcQueueFamilyIndex;
+        barrier.dstQueueFamilyIndex = barrierInfo.DstQueueFamilyIndex;
+        barrier.image = texture->m_Image;
+        barrier.subresourceRange.aspectMask =
+            Util::ConvertERHIImageAspectFlagToVkImageAspectFlags(barrierInfo.AspectMask);
+        barrier.subresourceRange.baseMipLevel = barrierInfo.BaseMipLevel;
+        barrier.subresourceRange.levelCount = barrierInfo.LevelCount;
+        barrier.subresourceRange.baseArrayLayer = barrierInfo.BaseArrayLayer;
+        barrier.subresourceRange.layerCount = barrierInfo.LayerCount;
 
-        VkPipelineStageFlags pipeLineSrcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        VkPipelineStageFlags pipeLineDstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        VkPipelineStageFlags srcPipelineStage =
+            Util::ConvertERHIPipelineStageFlagToVkPipelineStageFlags(barrierInfo.SrcPipelineStage);
+        VkPipelineStageFlags dstPipelineStage =
+            Util::ConvertERHIPipelineStageFlagToVkPipelineStageFlags(barrierInfo.DstPipelineStage);
+
         vkCmdPipelineBarrier(
-            vulkanCmdBuffer->CommandBuffer, pipeLineSrcStage, pipeLineDstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+            vulkanCmdBuffer->CommandBuffer, srcPipelineStage, dstPipelineStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
     }
+    else
+    {
+        ME_ASSERT(false, "Not support pipeline barrier type now");
+    }
+}
+
+void VulkanRHI::CmdCopyTexture(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> src, Ref<RHITexture2D> dst)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    Ref<VulkanRHITexture2D> srcTex = std::dynamic_pointer_cast<VulkanRHITexture2D>(src);
+    Ref<VulkanRHITexture2D> dstTex = std::dynamic_pointer_cast<VulkanRHITexture2D>(dst);
 
     VkImageCopy imageCopy;
     imageCopy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -619,36 +597,11 @@ bool VulkanRHI::CmdCopyTextureToBackbuffer(Ref<RHICommandBuffer> commandBuffer, 
     imageCopy.srcOffset = {0, 0, 0};
     imageCopy.dstSubresource = imageCopy.srcSubresource;
     imageCopy.dstOffset = {0, 0, 0};
-    imageCopy.extent = {vulkanTex->GetWidth(), vulkanTex->GetHeight(), 1};
+    imageCopy.extent = {srcTex->GetWidth(), srcTex->GetHeight(), 1};
 
     vkCmdCopyImage(
-        vulkanCmdBuffer->CommandBuffer, vulkanTex->m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, swapchainImage,
+        vulkanCmdBuffer->CommandBuffer, srcTex->m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstTex->m_Image,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
-
-    {
-        VkImageMemoryBarrier barrier;
-        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.pNext = nullptr;
-        barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = swapchainImage;
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = 1;
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = 1;
-
-        VkPipelineStageFlags pipeLineSrcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        VkPipelineStageFlags pipeLineDstStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        vkCmdPipelineBarrier(
-            vulkanCmdBuffer->CommandBuffer, pipeLineSrcStage, pipeLineDstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-    }
-
-    return true;
 }
 
 VkInstance VulkanRHI::GetInstance()
@@ -683,7 +636,7 @@ uint32_t VulkanRHI::GetMinImageCount()
 
 uint32_t VulkanRHI::GetBackImageCount()
 {
-    return (uint32_t)m_SwapchainImages.size();
+    return (uint32_t)m_SwapchainTextures.size();
 }
 
 bool VulkanRHI::IsExtensionAvailable(const std::vector<VkExtensionProperties>& properties, const char* extension)
@@ -1042,7 +995,7 @@ std::vector<VkPresentModeKHR> VulkanRHI::GetSupportPresentModes(VkPhysicalDevice
 
 bool VulkanRHI::CreateSwapchainResources(
     VkSwapchainKHR& swapchain,
-    std::vector<VkImage>& swapchainImages,
+    std::vector<Ref<VulkanRHITexture2D>>& swapchainTextures,
     std::vector<VkSemaphore>& imageAcquiredSemaphores,
     std::vector<VkSemaphore>& renderCompleteSemaphores,
     VkPhysicalDevice physicalDevie,
@@ -1129,13 +1082,26 @@ bool VulkanRHI::CreateSwapchainResources(
         return false;
     }
 
-    swapchainImages.clear();
+    std::vector<VkImage> swapchainImages;
     swapchainImages.resize(swapchainImageCount);
     res = vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, swapchainImages.data());
     if (res != VK_SUCCESS)
     {
         RENDER_LOG_ERROR("vkGetSwapchainImagesKHR fail");
         return false;
+    }
+
+    swapchainTextures.clear();
+    swapchainTextures.resize(swapchainImageCount);
+    for (size_t i = 0; i < swapchainImages.size(); ++i)
+    {
+        Ref<VulkanRHITexture2D> texture = CreateRef<VulkanRHITexture2D>();
+        texture->m_PixelFormat = ERHIPixelFormat::PF_Unknown;
+        texture->m_Width = info.imageExtent.width;
+        texture->m_Height = info.imageExtent.height;
+        texture->m_VKFormat = info.imageFormat;
+        texture->m_Image = swapchainImages[i];
+        swapchainTextures[i] = texture;
     }
 
     // create semaphore
