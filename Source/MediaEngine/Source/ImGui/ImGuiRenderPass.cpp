@@ -89,7 +89,7 @@ bool ImGuiRenderPass::Draw()
 {
     RHIRenderPassBeginInfo renderPassBeginIhfo;
     renderPassBeginIhfo.RenderArea = {0, 0, m_Width, m_Height};
-    renderPassBeginIhfo.ColorClearValue = {1, 0, 0, 1};
+    renderPassBeginIhfo.ColorClearValue = {0.1, 0.2, 0.3, 1};
     renderPassBeginIhfo.RenderPass = m_RHIRenderPass;
     renderPassBeginIhfo.Framebuffer = m_RHIFrameBuffer;
 

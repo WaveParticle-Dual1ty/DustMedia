@@ -1011,6 +1011,12 @@ bool VulkanRHI::CreateSwapchainResources(
     ME_ASSERT(supportSurfaceFormats.size() != 0, "No support surface format");
     ME_ASSERT(supportPresentModes.size() != 0, "No support present mode");
     VkSurfaceFormatKHR surfaceFormat = supportSurfaceFormats[0];
+    for (auto format : supportSurfaceFormats)
+    {
+        if (format.format == VK_FORMAT_R8G8B8A8_UNORM)
+            surfaceFormat = format;
+    }
+
     VkPresentModeKHR presentMode = supportPresentModes[0];
 
     // create swapchain
