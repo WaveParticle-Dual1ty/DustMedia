@@ -15,7 +15,7 @@ public:
 public:
     virtual bool Initialize(uint32_t w, uint32_t h);
     virtual bool Resize(uint32_t w, uint32_t h);
-    virtual bool Draw();
+    virtual bool Draw(Ref<RHICommandBuffer> cmdBuffer);
     virtual void Destroy();
 
 public:

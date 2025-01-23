@@ -85,7 +85,7 @@ bool ImGuiRenderPass::Resize(uint32_t w, uint32_t h)
     return true;
 }
 
-bool ImGuiRenderPass::Draw()
+bool ImGuiRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
 {
     RHIRenderPassBeginInfo renderPassBeginIhfo;
     renderPassBeginIhfo.RenderArea = {0, 0, m_Width, m_Height};
@@ -93,8 +93,7 @@ bool ImGuiRenderPass::Draw()
     renderPassBeginIhfo.RenderPass = m_RHIRenderPass;
     renderPassBeginIhfo.Framebuffer = m_RHIFrameBuffer;
 
-    Ref<RHICommandBuffer> buffer = m_RHI->GetCurrentCommandBuffer();
-    Ref<VulkanRHICommandBuffer> vulkanBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(buffer);
+    Ref<VulkanRHICommandBuffer> vulkanBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
 
     m_RHI->CmdBeginRenderPass(m_RHI->GetCurrentCommandBuffer(), renderPassBeginIhfo);
 

@@ -19,7 +19,7 @@ bool FRenderPass::Resize(uint32_t w, uint32_t h)
     return true;
 }
 
-bool FRenderPass::Draw()
+bool FRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
 {
     return true;
 }

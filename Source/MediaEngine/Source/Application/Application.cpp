@@ -103,7 +103,7 @@ void Application::Run()
 
         if (m_EnableUI)
         {
-            m_ImGuiRenderPass->Draw();
+            m_ImGuiRenderPass->Draw(cmdBuffer);
 
             Ref<RHITexture2D> uiTexture = m_ImGuiRenderPass->GetFramebuffer()->GetTargetTexture(0);
 
