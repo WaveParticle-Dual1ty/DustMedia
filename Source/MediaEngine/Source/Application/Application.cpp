@@ -2,6 +2,7 @@
 #include <thread>
 #include <chrono>
 #include "MediaEngine/Include/Core/Time.h"
+#include "MediaEngine/Include/Core/Assert.h"
 #include "MediaEngine/Source/ImGui/ImGuiLayer.h"
 #include "MediaEngine/Source/ImGui/ImGuiRenderPass.h"
 #include "AppLog.h"
@@ -9,9 +10,18 @@
 
 namespace ME
 {
+Application* Application::s_Instance = nullptr;
+
 Application::Application(const ApplicationSpecification& spec)
     : m_AppSpec(spec)
 {
+    ME_ASSERT(s_Instance == nullptr, "Application can not create once");
+    s_Instance = this;
+}
+
+Application& Application::Get()
+{
+    return *s_Instance;
 }
 
 void Application::Run()
@@ -128,6 +138,11 @@ void Application::Run()
     m_Window->Destroy();
 
     APP_LOG_INFO("Application stop");
+}
+
+Window& Application::GetWindow()
+{
+    return *m_Window.get();
 }
 
 void Application::PushLayer(std::shared_ptr<Layer> layer)

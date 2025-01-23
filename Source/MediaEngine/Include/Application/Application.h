@@ -20,9 +20,11 @@ class Application
 public:
     Application(const ApplicationSpecification& spec);
     virtual ~Application() = default;
+    static Application& Get();
 
 public:
     void Run();
+    Window& GetWindow();
 
 protected:
     void PushLayer(std::shared_ptr<Layer> layer);
@@ -41,6 +43,7 @@ private:
     void UpdateLayersUI(Timestep timestep);
 
 private:
+    static Application* s_Instance;
     ApplicationSpecification m_AppSpec;
     bool m_Running = true;
     bool m_WndMinimized = false;
@@ -48,7 +51,7 @@ private:
     double m_LastFrameTimeInSec = 0.f;
     bool m_EnableUI = true;
 
-    std::shared_ptr<Window> m_Window;
+    Ref<Window> m_Window;
     std::shared_ptr<class LayerStack> m_LayerStack;
     Ref<class ImGuiLayer> m_ImGuiLayer;
     Ref<class ImGuiRenderPass> m_ImGuiRenderPass;

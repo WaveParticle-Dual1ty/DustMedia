@@ -5,10 +5,10 @@
 
 namespace ME
 {
-std::shared_ptr<Window> Window::Create()
+Ref<Window> Window::Create()
 {
 #ifdef ME_PLATFORM_WINDOWS
-    auto wnd = std::make_shared<WindowsVulkanWindow>();
+    auto wnd = CreateRef<WindowsVulkanWindow>();
     return wnd;
 #elif defined(ME_PLATFORM_MACOS)
     auto wnd = std::make_shared<AppleVulkanWindow>();

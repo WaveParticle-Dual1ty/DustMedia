@@ -4,7 +4,7 @@ namespace ME
 {
 namespace Utils
 {
-KeyCode ConvertGLFWKeycodeToHazelKeycode(int keycode)
+KeyCode ConvertGLFWKeycodeToMEKeycode(int keycode)
 {
     KeyCode res = KeyCode::Unknow;
 
@@ -378,7 +378,7 @@ KeyCode ConvertGLFWKeycodeToHazelKeycode(int keycode)
     return res;
 }
 
-MouseCode ConvertGLFWMouseButtonToHazelMouseCode(int button)
+MouseCode ConvertGLFWMouseButtonToMEMouseCode(int button)
 {
     MouseCode res = MouseCode::Unkown;
 
@@ -414,5 +414,424 @@ MouseCode ConvertGLFWMouseButtonToHazelMouseCode(int button)
 
     return res;
 }
+
+int ConvertMEKeycodeToGLFWKeycode(KeyCode keycode)
+{
+    int res = -1;
+
+    switch (keycode)
+    {
+        case KeyCode::Unknow:
+            res = -1;
+            break;
+        case KeyCode::Space:
+            res = GLFW_KEY_SPACE;
+            break;
+        case KeyCode::Apostrophe:
+            res = GLFW_KEY_APOSTROPHE;
+            break;
+        case KeyCode::Comma:
+            res = GLFW_KEY_COMMA;
+            break;
+        case KeyCode::Minus:
+            res = GLFW_KEY_MINUS;
+            break;
+        case KeyCode::Period:
+            res = GLFW_KEY_PERIOD;
+            break;
+        case KeyCode::Slash:
+            res = GLFW_KEY_SLASH;
+            break;
+        case KeyCode::D0:
+            res = GLFW_KEY_0;
+            break;
+        case KeyCode::D1:
+            res = GLFW_KEY_1;
+            break;
+        case KeyCode::D2:
+            res = GLFW_KEY_2;
+            break;
+        case KeyCode::D3:
+            res = GLFW_KEY_3;
+            break;
+        case KeyCode::D4:
+            res = GLFW_KEY_4;
+            break;
+        case KeyCode::D5:
+            res = GLFW_KEY_5;
+            break;
+        case KeyCode::D6:
+            res = GLFW_KEY_6;
+            break;
+        case KeyCode::D7:
+            res = GLFW_KEY_7;
+            break;
+        case KeyCode::D8:
+            res = GLFW_KEY_8;
+            break;
+        case KeyCode::D9:
+            res = GLFW_KEY_9;
+            break;
+        case KeyCode::Semicolon:
+            res = GLFW_KEY_SEMICOLON;
+            break;
+        case KeyCode::Equal:
+            res = GLFW_KEY_EQUAL;
+            break;
+        case KeyCode::A:
+            res = GLFW_KEY_A;
+            break;
+        case KeyCode::B:
+            res = GLFW_KEY_B;
+            break;
+        case KeyCode::C:
+            res = GLFW_KEY_C;
+            break;
+        case KeyCode::D:
+            res = GLFW_KEY_D;
+            break;
+        case KeyCode::E:
+            res = GLFW_KEY_E;
+            break;
+        case KeyCode::F:
+            res = GLFW_KEY_F;
+            break;
+        case KeyCode::G:
+            res = GLFW_KEY_G;
+            break;
+        case KeyCode::H:
+            res = GLFW_KEY_H;
+            break;
+        case KeyCode::I:
+            res = GLFW_KEY_I;
+            break;
+        case KeyCode::J:
+            res = GLFW_KEY_J;
+            break;
+        case KeyCode::K:
+            res = GLFW_KEY_K;
+            break;
+        case KeyCode::L:
+            res = GLFW_KEY_L;
+            break;
+        case KeyCode::M:
+            res = GLFW_KEY_M;
+            break;
+        case KeyCode::N:
+            res = GLFW_KEY_N;
+            break;
+        case KeyCode::O:
+            res = GLFW_KEY_O;
+            break;
+        case KeyCode::P:
+            res = GLFW_KEY_P;
+            break;
+        case KeyCode::Q:
+            res = GLFW_KEY_Q;
+            break;
+        case KeyCode::R:
+            res = GLFW_KEY_R;
+            break;
+        case KeyCode::S:
+            res = GLFW_KEY_S;
+            break;
+        case KeyCode::T:
+            res = GLFW_KEY_T;
+            break;
+        case KeyCode::U:
+            res = GLFW_KEY_U;
+            break;
+        case KeyCode::V:
+            res = GLFW_KEY_V;
+            break;
+        case KeyCode::W:
+            res = GLFW_KEY_W;
+            break;
+        case KeyCode::X:
+            res = GLFW_KEY_X;
+            break;
+        case KeyCode::Y:
+            res = GLFW_KEY_Y;
+            break;
+        case KeyCode::Z:
+            res = GLFW_KEY_Z;
+            break;
+        case KeyCode::LeftBracket:
+            res = GLFW_KEY_LEFT_BRACKET;
+            break;
+        case KeyCode::Backslash:
+            res = GLFW_KEY_BACKSLASH;
+            break;
+        case KeyCode::RightBracket:
+            res = GLFW_KEY_RIGHT_BRACKET;
+            break;
+        case KeyCode::GraveAccent:
+            res = GLFW_KEY_GRAVE_ACCENT;
+            break;
+        case KeyCode::World1:
+            res = GLFW_KEY_WORLD_1;
+            break;
+        case KeyCode::World2:
+            res = GLFW_KEY_WORLD_2;
+            break;
+        case KeyCode::Escape:
+            res = GLFW_KEY_ESCAPE;
+            break;
+        case KeyCode::Enter:
+            res = GLFW_KEY_ENTER;
+            break;
+        case KeyCode::Tab:
+            res = GLFW_KEY_TAB;
+            break;
+        case KeyCode::Backspace:
+            res = GLFW_KEY_BACKSPACE;
+            break;
+        case KeyCode::Insert:
+            res = GLFW_KEY_INSERT;
+            break;
+        case KeyCode::Delete:
+            res = GLFW_KEY_DELETE;
+            break;
+        case KeyCode::Right:
+            res = GLFW_KEY_RIGHT;
+            break;
+        case KeyCode::Left:
+            res = GLFW_KEY_LEFT;
+            break;
+        case KeyCode::Down:
+            res = GLFW_KEY_DOWN;
+            break;
+        case KeyCode::Up:
+            res = GLFW_KEY_UP;
+            break;
+        case KeyCode::PageUp:
+            res = GLFW_KEY_PAGE_UP;
+            break;
+        case KeyCode::PageDown:
+            res = GLFW_KEY_PAGE_DOWN;
+            break;
+        case KeyCode::Home:
+            res = GLFW_KEY_HOME;
+            break;
+        case KeyCode::End:
+            res = GLFW_KEY_END;
+            break;
+        case KeyCode::CapsLock:
+            res = GLFW_KEY_CAPS_LOCK;
+            break;
+        case KeyCode::ScrollLock:
+            res = GLFW_KEY_SCROLL_LOCK;
+            break;
+        case KeyCode::NumLock:
+            res = GLFW_KEY_NUM_LOCK;
+            break;
+        case KeyCode::PrintScreen:
+            res = GLFW_KEY_PRINT_SCREEN;
+            break;
+        case KeyCode::Pause:
+            res = GLFW_KEY_PAUSE;
+            break;
+        case KeyCode::F1:
+            res = GLFW_KEY_F1;
+            break;
+        case KeyCode::F2:
+            res = GLFW_KEY_F2;
+            break;
+        case KeyCode::F3:
+            res = GLFW_KEY_F3;
+            break;
+        case KeyCode::F4:
+            res = GLFW_KEY_F4;
+            break;
+        case KeyCode::F5:
+            res = GLFW_KEY_F5;
+            break;
+        case KeyCode::F6:
+            res = GLFW_KEY_F6;
+            break;
+        case KeyCode::F7:
+            res = GLFW_KEY_F7;
+            break;
+        case KeyCode::F8:
+            res = GLFW_KEY_F8;
+            break;
+        case KeyCode::F9:
+            res = GLFW_KEY_F9;
+            break;
+        case KeyCode::F10:
+            res = GLFW_KEY_F10;
+            break;
+        case KeyCode::F11:
+            res = GLFW_KEY_F11;
+            break;
+        case KeyCode::F12:
+            res = GLFW_KEY_F12;
+            break;
+        case KeyCode::F13:
+            res = GLFW_KEY_F13;
+            break;
+        case KeyCode::F14:
+            res = GLFW_KEY_F14;
+            break;
+        case KeyCode::F15:
+            res = GLFW_KEY_F15;
+            break;
+        case KeyCode::F16:
+            res = GLFW_KEY_F16;
+            break;
+        case KeyCode::F17:
+            res = GLFW_KEY_F17;
+            break;
+        case KeyCode::F18:
+            res = GLFW_KEY_F18;
+            break;
+        case KeyCode::F19:
+            res = GLFW_KEY_F19;
+            break;
+        case KeyCode::F20:
+            res = GLFW_KEY_F20;
+            break;
+        case KeyCode::F21:
+            res = GLFW_KEY_F21;
+            break;
+        case KeyCode::F22:
+            res = GLFW_KEY_F22;
+            break;
+        case KeyCode::F23:
+            res = GLFW_KEY_F23;
+            break;
+        case KeyCode::F24:
+            res = GLFW_KEY_F24;
+            break;
+        case KeyCode::F25:
+            res = GLFW_KEY_F25;
+            break;
+        case KeyCode::KP0:
+            res = GLFW_KEY_KP_0;
+            break;
+        case KeyCode::KP1:
+            res = GLFW_KEY_KP_1;
+            break;
+        case KeyCode::KP2:
+            res = GLFW_KEY_KP_2;
+            break;
+        case KeyCode::KP3:
+            res = GLFW_KEY_KP_3;
+            break;
+        case KeyCode::KP4:
+            res = GLFW_KEY_KP_4;
+            break;
+        case KeyCode::KP5:
+            res = GLFW_KEY_KP_5;
+            break;
+        case KeyCode::KP6:
+            res = GLFW_KEY_KP_6;
+            break;
+        case KeyCode::KP7:
+            res = GLFW_KEY_KP_7;
+            break;
+        case KeyCode::KP8:
+            res = GLFW_KEY_KP_8;
+            break;
+        case KeyCode::KP9:
+            res = GLFW_KEY_KP_9;
+            break;
+        case KeyCode::KPDecimal:
+            res = GLFW_KEY_KP_DECIMAL;
+            break;
+        case KeyCode::KPDivide:
+            res = GLFW_KEY_KP_DIVIDE;
+            break;
+        case KeyCode::KPMultiply:
+            res = GLFW_KEY_KP_MULTIPLY;
+            break;
+        case KeyCode::KPSubtract:
+            res = GLFW_KEY_KP_SUBTRACT;
+            break;
+        case KeyCode::KPAdd:
+            res = GLFW_KEY_KP_ADD;
+            break;
+        case KeyCode::KPEnter:
+            res = GLFW_KEY_KP_ENTER;
+            break;
+        case KeyCode::KPEqual:
+            res = GLFW_KEY_KP_EQUAL;
+            break;
+        case KeyCode::LeftShift:
+            res = GLFW_KEY_LEFT_SHIFT;
+            break;
+        case KeyCode::LeftControl:
+            res = GLFW_KEY_LEFT_CONTROL;
+            break;
+        case KeyCode::LeftAlt:
+            res = GLFW_KEY_LEFT_ALT;
+            break;
+        case KeyCode::LeftSuper:
+            res = GLFW_KEY_LEFT_SUPER;
+            break;
+        case KeyCode::RightShift:
+            res = GLFW_KEY_RIGHT_SHIFT;
+            break;
+        case KeyCode::RightControl:
+            res = GLFW_KEY_RIGHT_CONTROL;
+            break;
+        case KeyCode::RightAlt:
+            res = GLFW_KEY_RIGHT_ALT;
+            break;
+        case KeyCode::RightSuper:
+            res = GLFW_KEY_RIGHT_SUPER;
+            break;
+        case KeyCode::Menu:
+            res = GLFW_KEY_MENU;
+            break;
+        default:
+            res = -1;
+            break;
+    }
+
+    return res;
+}
+
+int ConvertMEMouseCodeGLFWMouseButton(MouseCode button)
+{
+    int res = -1;
+
+    switch (button)
+    {
+        case MouseCode::Unkown:
+            res = -1;
+            break;
+        case MouseCode::Button0:
+            res = GLFW_MOUSE_BUTTON_1;
+            break;
+        case MouseCode::Button1:
+            res = GLFW_MOUSE_BUTTON_2;
+            break;
+        case MouseCode::Button2:
+            res = GLFW_MOUSE_BUTTON_3;
+            break;
+        case MouseCode::Button3:
+            res = GLFW_MOUSE_BUTTON_4;
+            break;
+        case MouseCode::Button4:
+            res = GLFW_MOUSE_BUTTON_5;
+            break;
+        case MouseCode::Button5:
+            res = GLFW_MOUSE_BUTTON_6;
+            break;
+        case MouseCode::Button6:
+            res = GLFW_MOUSE_BUTTON_7;
+            break;
+        case MouseCode::Button7:
+            res = GLFW_MOUSE_BUTTON_8;
+            break;
+        default:
+            res = -1;
+            break;
+    }
+
+    return res;
+}
+
 }  //namespace Utils
 }  //namespace ME

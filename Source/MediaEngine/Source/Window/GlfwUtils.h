@@ -7,7 +7,10 @@ namespace ME
 {
 namespace Utils
 {
-KeyCode ConvertGLFWKeycodeToHazelKeycode(int keycode);
-MouseCode ConvertGLFWMouseButtonToHazelMouseCode(int button);
+KeyCode ConvertGLFWKeycodeToMEKeycode(int keycode);
+MouseCode ConvertGLFWMouseButtonToMEMouseCode(int button);
+int ConvertMEKeycodeToGLFWKeycode(KeyCode keycode);
+int ConvertMEMouseCodeGLFWMouseButton(MouseCode button);
+
 }  //namespace Utils
 }  //namespace ME
