@@ -95,13 +95,13 @@ bool ImGuiRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
 
     Ref<VulkanRHICommandBuffer> vulkanBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
 
-    m_RHI->CmdBeginRenderPass(m_RHI->GetCurrentCommandBuffer(), renderPassBeginIhfo);
+    m_RHI->CmdBeginRenderPass(cmdBuffer, renderPassBeginIhfo);
 
     // to do
     ImDrawData* main_draw_data = ImGui::GetDrawData();
     ImGui_ImplVulkan_RenderDrawData(main_draw_data, vulkanBuffer->CommandBuffer);
 
-    m_RHI->CmdEndRenderPass(m_RHI->GetCurrentCommandBuffer());
+    m_RHI->CmdEndRenderPass(cmdBuffer);
 
     return true;
 }
