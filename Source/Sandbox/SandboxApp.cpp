@@ -5,6 +5,7 @@
 #include "MediaEngine/Include/Application/EntryPoint.h"
 #include "MediaEngine/Include/Application/Application.h"
 #include "DebugLayer.h"
+#include "TestLayer.h"
 
 std::unique_ptr<ME::Application> ME::CreateApplication()
 {
@@ -19,7 +20,9 @@ SandboxApp::SandboxApp()
 bool SandboxApp::OnEngineInit()
 {
     std::shared_ptr<DebugLayer> debugLayer = std::make_shared<DebugLayer>();
+    std::shared_ptr<TestLayer> testLayer = std::make_shared<TestLayer>();
     PushLayer(debugLayer);
+    PushLayer(testLayer);
 
     return true;
 }

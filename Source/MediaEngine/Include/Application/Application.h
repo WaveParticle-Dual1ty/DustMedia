@@ -25,6 +25,7 @@ public:
 public:
     void Run();
     Window& GetWindow();
+    Ref<RHI> GetRHI();
 
 protected:
     void PushLayer(std::shared_ptr<Layer> layer);

@@ -145,6 +145,11 @@ Window& Application::GetWindow()
     return *m_Window.get();
 }
 
+Ref<RHI> Application::GetRHI()
+{
+    return m_RHI;
+}
+
 void Application::PushLayer(std::shared_ptr<Layer> layer)
 {
     m_LayerStack->PushLayer(layer);
