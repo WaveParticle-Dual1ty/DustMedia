@@ -18,7 +18,7 @@ Ref<ImGuiLayer> ImGuiLayer::Create(RHI::API api)
     }
     else
     {
-        ME_ASSERT("Not support this render API");
+        ME_ASSERT(false, "Not support this render API");
         return nullptr;
     }
 }

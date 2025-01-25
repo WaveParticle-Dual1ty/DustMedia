@@ -40,11 +40,16 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
 
     m_TargetImTextureID = m_RHI->CreateImTextureID(targetTex);
 
+    m_Width = w;
+    m_Height = h;
     return true;
 }
 
 bool TestRenderPass::Resize(uint32_t w, uint32_t h)
 {
+    m_RHI->DestroyImTextureID(m_TargetImTextureID);
+    m_TargetImTextureID = nullptr;
+
     for (auto& texture : m_TargetTextures)
         m_RHI->DestroyRHITexture2D(texture);
 
@@ -74,6 +79,8 @@ bool TestRenderPass::Resize(uint32_t w, uint32_t h)
         SANDBOX_LOG_ERROR("RHI::CreateRHIFramebuffer fail");
         return false;
     }
+
+    m_TargetImTextureID = m_RHI->CreateImTextureID(targetTex);
 
     m_Width = w;
     m_Height = h;

@@ -33,6 +33,7 @@ public:
 
     // ImGui
     virtual void* CreateImTextureID(Ref<RHITexture2D> texture) = 0;
+    virtual void DestroyImTextureID(void* imTextureID) = 0;
 
     // Resources
     virtual Ref<RHITexture2D> CreateRHITexture2D(RHITexture2DCreateDesc desc) = 0;

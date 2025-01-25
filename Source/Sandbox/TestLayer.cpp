@@ -22,6 +22,9 @@ void TestLayer::OnAttach()
         ME_ASSERT(false, "TestRenderPass::Initialize fail");
         return;
     }
+
+    m_ViewportSize = {300, 200};
+    m_CacheViewportSize = m_ViewportSize;
 }
 
 void TestLayer::OnDetach()
@@ -30,24 +33,44 @@ void TestLayer::OnDetach()
 
 void TestLayer::OnUpdate(ME::Timestep timestep)
 {
+    std::array<uint32_t, 2> size = m_CacheViewportSize;
+    if (size[0] != m_ViewportSize[0] || size[1] != m_ViewportSize[1])
+    {
+        m_ViewportSize = size;
+        m_TestRenderPass->Resize(size[0], size[1]);
+    }
+
     Ref<RHICommandBuffer> cmdBuffer = m_RHI->GetCurrentCommandBuffer();
-    //m_RHI->BeginCommandBuffer(cmdBuffer);
     m_TestRenderPass->Draw(cmdBuffer);
-    //m_RHI->EndCommandBuffer(cmdBuffer);
 }
 
 void TestLayer::OnUIUpdate()
 {
-    ImGui::Begin("TestLayer");
+    ImVec2 viewportSize = ImVec2(0, 0);
 
-    static std::array<float, 4> color = {0, 0, 0, 1};
-    ImGui::ColorEdit4("Color", color.data());
-    m_TestRenderPass->SetColor(color);
+    {
+        ImGui::Begin("Viewport");
 
-    void* texID = m_TestRenderPass->GetTargetImTextureID();
-    ImGui::Image(texID, ImVec2(300, 200), ImVec2(0, 1), ImVec2(1, 0));
+        viewportSize = ImGui::GetContentRegionAvail();
+        m_CacheViewportSize = {(uint32_t)viewportSize.x, (uint32_t)viewportSize.y};
 
-    ImGui::End();
+        void* texID = m_TestRenderPass->GetTargetImTextureID();
+        ImGui::Image(texID, ImVec2(viewportSize.x, viewportSize.y), ImVec2(0, 1), ImVec2(1, 0));
+
+        ImGui::End();
+    }
+
+    {
+        ImGui::Begin("Edit");
+
+        static std::array<float, 4> color = {0, 0, 0, 1};
+        ImGui::ColorEdit4("Color", color.data());
+        m_TestRenderPass->SetColor(color);
+
+        ImGui::Text("Viewport size: (%.2f, %.2f)", viewportSize.x, viewportSize.y);
+
+        ImGui::End();
+    }
 }
 
 void TestLayer::OnEvent(ME::Event& event)

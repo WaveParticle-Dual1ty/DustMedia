@@ -23,4 +23,6 @@ public:
 private:
     Ref<RHI> m_RHI;
     Ref<TestRenderPass> m_TestRenderPass;
+    std::array<uint32_t, 2> m_ViewportSize = {0, 0};
+    std::array<uint32_t, 2> m_CacheViewportSize = {0, 0};
 };

@@ -249,6 +249,12 @@ void* VulkanRHI::CreateImTextureID(Ref<RHITexture2D> texture)
     return descriptorSet;
 }
 
+void VulkanRHI::DestroyImTextureID(void* imTextureID)
+{
+    VkDescriptorSet descriptorSet = (VkDescriptorSet)imTextureID;
+    vkFreeDescriptorSets(m_Device, m_DescriptorPool, 1, &descriptorSet);
+}
+
 Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
 {
     Ref<VulkanRHITexture2D> texture = CreateRef<VulkanRHITexture2D>();

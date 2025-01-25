@@ -34,6 +34,7 @@ public:
 
     // ImGui
     virtual void* CreateImTextureID(Ref<RHITexture2D> texture) override;
+    virtual void DestroyImTextureID(void* imTextureID) override;
 
     // Resources
     virtual Ref<RHITexture2D> CreateRHITexture2D(RHITexture2DCreateDesc desc) override;
