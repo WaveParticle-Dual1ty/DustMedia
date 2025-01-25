@@ -68,6 +68,9 @@ void Application::Run()
 
         m_RHI->PrepareForNextFrame();
 
+        Ref<RHICommandBuffer> cmdBuffer = m_RHI->GetCurrentCommandBuffer();
+        m_RHI->BeginCommandBuffer(cmdBuffer);
+
         for (auto& layer : m_LayerStack->GetLayers())
         {
             layer->OnUpdate(timestep);
@@ -84,10 +87,6 @@ void Application::Run()
 
             m_ImGuiLayer->End();
         }
-
-        Ref<RHICommandBuffer> cmdBuffer = m_RHI->GetCurrentCommandBuffer();
-
-        m_RHI->BeginCommandBuffer(cmdBuffer);
 
         Ref<RHITexture2D> backTexture = m_RHI->GetCurrentBackTexture();
 

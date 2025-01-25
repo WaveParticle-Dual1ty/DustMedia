@@ -32,6 +32,9 @@ public:
     virtual Ref<RHICommandBuffer> GetCurrentCommandBuffer() const override;
     virtual Ref<RHITexture2D> GetCurrentBackTexture() override;
 
+    // ImGui
+    virtual void* CreateImTextureID(Ref<RHITexture2D> texture) override;
+
     // Resources
     virtual Ref<RHITexture2D> CreateRHITexture2D(RHITexture2DCreateDesc desc) override;
     virtual Ref<RHIRenderPass> CreateRHIRenderPass(RHIRenderPassCreateDesc desc) override;
@@ -48,6 +51,8 @@ public:
     // Command
     virtual bool BeginCommandBuffer(Ref<RHICommandBuffer> cmdBuffer) override;
     virtual bool EndCommandBuffer(Ref<RHICommandBuffer> cmdBuffer) override;
+    virtual void CmdPushEvent(Ref<RHICommandBuffer> cmdBuffer, const char* name, RHIColor color) override;
+    virtual void CmdPopEvent(Ref<RHICommandBuffer> cmdBuffer) override;
     virtual void CmdBeginRenderPass(Ref<RHICommandBuffer> cmdBuffer, RHIRenderPassBeginInfo beginIhfo) override;
     virtual void CmdEndRenderPass(Ref<RHICommandBuffer> cmdBuffer) override;
     virtual void CmdClearColor(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> texture, RHIColor color) override;
@@ -114,6 +119,7 @@ private:
         VkExtent2D extend,
         uint32_t minImageCount);
     VkDescriptorPool CreateDescriptorPool(VkDevice device);
+    VkSampler CreateSampler(VkDevice device);
 
 private:
     VkInstance m_Instance = VK_NULL_HANDLE;
@@ -135,6 +141,11 @@ private:
     std::vector<VkSemaphore> m_RenderCompleteSemaphores;
     uint32_t m_GraphicSemaphoreCnt = 0;
     uint32_t m_GraphicSemaphoreIndex = 0;
+    VkSampler m_Sampler = VK_NULL_HANDLE;
+
+private:
+    PFN_vkCmdBeginDebugUtilsLabelEXT m_VkCmdBeginDebugUtilsLabelEXT = nullptr;
+    PFN_vkCmdEndDebugUtilsLabelEXT m_VkCmdEndDebugUtilsLabelEXT = nullptr;
 };
 
 }  //namespace ME

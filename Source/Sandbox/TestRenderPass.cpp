@@ -38,6 +38,8 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
         return false;
     }
 
+    m_TargetImTextureID = m_RHI->CreateImTextureID(targetTex);
+
     return true;
 }
 
@@ -81,6 +83,9 @@ bool TestRenderPass::Resize(uint32_t w, uint32_t h)
 bool TestRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
 {
     Ref<RHITexture2D> texture = m_TargetTextures[0];
+
+    m_RHI->CmdPushEvent(cmdBuffer, "TestRenderPass", RHIColor(1, 0, 0, 1));
+
     m_RHI->CmdPipelineBarrier(
         cmdBuffer,
         RHIPipelineBarrierInfo(
@@ -89,11 +94,31 @@ bool TestRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
             ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
             ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             ERHIImageAspectFlag::RHI_IMAGE_ASPECT_COLOR_BIT));
-    m_RHI->CmdClearColor(cmdBuffer, texture, RHIColor(1, 0, 0, 1));
+
+    m_RHI->CmdClearColor(
+        cmdBuffer, texture, RHIColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]));
+
+    m_RHI->CmdPipelineBarrier(
+        cmdBuffer,
+        RHIPipelineBarrierInfo(
+            texture, ERHIAccessFlag::RHI_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            ERHIAccessFlag::RHI_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+            ERHIImageLayout::RHI_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ERHIImageLayout::RHI_IMAGE_LAYOUT_GENERAL,
+            ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            ERHIImageAspectFlag::RHI_IMAGE_ASPECT_COLOR_BIT));
+
+    m_RHI->CmdPopEvent(cmdBuffer);
+
     return true;
 }
 
-Ref<RHITexture2D> TestRenderPass::GetTargetTexture()
+void* TestRenderPass::GetTargetImTextureID()
 {
-    return m_TargetTextures[0];
+    return m_TargetImTextureID;
+}
+
+void TestRenderPass::SetColor(std::array<float, 4> color)
+{
+    m_ClearColor = color;
 }

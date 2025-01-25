@@ -1,6 +1,7 @@
 ﻿#include "VulkanRHI.h"
 #include <set>
 #include <array>
+#include "ThirdParty/imgui/backends/imgui_impl_vulkan.h"
 #include "MediaEngine/Include/Core/Assert.h"
 #include "../RenderLog.h"
 #include "VulkanRHIUtils.h"
@@ -86,6 +87,18 @@ bool VulkanRHI::Initialize(std::shared_ptr<Window> wnd)
         RENDER_LOG_ERROR("CreateDescriptorPool fail");
         return false;
     }
+
+    m_Sampler = CreateSampler(m_Device);
+    if (m_Sampler == VK_NULL_HANDLE)
+    {
+        RENDER_LOG_ERROR("CreateSampler fail");
+        return false;
+    }
+
+    m_VkCmdBeginDebugUtilsLabelEXT =
+        (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(m_Instance, "vkCmdBeginDebugUtilsLabelEXT");
+    m_VkCmdEndDebugUtilsLabelEXT =
+        (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(m_Instance, "vkCmdEndDebugUtilsLabelEXT");
 
     return true;
 }
@@ -228,6 +241,14 @@ Ref<RHITexture2D> VulkanRHI::GetCurrentBackTexture()
     return currentTex;
 }
 
+void* VulkanRHI::CreateImTextureID(Ref<RHITexture2D> texture)
+{
+    Ref<VulkanRHITexture2D> vulkanTex = std::dynamic_pointer_cast<VulkanRHITexture2D>(texture);
+    VkImageLayout imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(m_Sampler, vulkanTex->m_ImageView, imageLayout);
+    return descriptorSet;
+}
+
 Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
 {
     Ref<VulkanRHITexture2D> texture = CreateRef<VulkanRHITexture2D>();
@@ -250,7 +271,9 @@ Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
     imageCreateInfo.arrayLayers = 1;
     imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    //imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageCreateInfo.queueFamilyIndexCount = 0;
     imageCreateInfo.pQueueFamilyIndices = nullptr;
@@ -485,6 +508,32 @@ bool VulkanRHI::EndCommandBuffer(Ref<RHICommandBuffer> cmdBuffer)
     }
 
     return true;
+}
+
+void VulkanRHI::CmdPushEvent(Ref<RHICommandBuffer> cmdBuffer, const char* name, RHIColor color)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    if (m_VkCmdBeginDebugUtilsLabelEXT)
+    {
+        VkDebugUtilsLabelEXT label;
+        label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+        label.pNext = nullptr;
+        label.pLabelName = name;
+        label.color[0] = color.R;
+        label.color[1] = color.G;
+        label.color[2] = color.B;
+        label.color[3] = color.A;
+        m_VkCmdBeginDebugUtilsLabelEXT(vulkanCmdBuffer->CommandBuffer, &label);
+    }
+}
+
+void VulkanRHI::CmdPopEvent(Ref<RHICommandBuffer> cmdBuffer)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    if (m_VkCmdEndDebugUtilsLabelEXT)
+    {
+        m_VkCmdEndDebugUtilsLabelEXT(vulkanCmdBuffer->CommandBuffer);
+    }
 }
 
 void VulkanRHI::CmdBeginRenderPass(Ref<RHICommandBuffer> cmdBuffer, RHIRenderPassBeginInfo beginIhfo)
@@ -1140,14 +1189,14 @@ bool VulkanRHI::CreateSwapchainResources(
 VkDescriptorPool VulkanRHI::CreateDescriptorPool(VkDevice device)
 {
     std::array<VkDescriptorPoolSize, 1> poolSizes = {
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1}
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10}
     };
 
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
     descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptorPoolCreateInfo.pNext = nullptr;
     descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    descriptorPoolCreateInfo.maxSets = 1;
+    descriptorPoolCreateInfo.maxSets = 5;
     descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
     descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
 
@@ -1160,6 +1209,39 @@ VkDescriptorPool VulkanRHI::CreateDescriptorPool(VkDevice device)
     }
 
     return descriptorPool;
+}
+
+VkSampler VulkanRHI::CreateSampler(VkDevice device)
+{
+    VkSamplerCreateInfo samplerCreateInfo;
+    samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerCreateInfo.pNext = nullptr;
+    samplerCreateInfo.flags = 0;
+    samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+    samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+    samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerCreateInfo.mipLodBias = 0;
+    samplerCreateInfo.anisotropyEnable = VK_FALSE;
+    samplerCreateInfo.maxAnisotropy = 1;
+    samplerCreateInfo.compareEnable = VK_FALSE;
+    samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
+    samplerCreateInfo.minLod = 0;
+    samplerCreateInfo.maxLod = 0;
+    samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+
+    VkSampler sampler = VK_NULL_HANDLE;
+    VkResult res = vkCreateSampler(device, &samplerCreateInfo, nullptr, &sampler);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateSampler fail");
+        return VK_NULL_HANDLE;
+    }
+
+    return sampler;
 }
 
 }  //namespace ME

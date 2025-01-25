@@ -31,6 +31,9 @@ public:
     virtual Ref<RHICommandBuffer> GetCurrentCommandBuffer() const = 0;
     virtual Ref<RHITexture2D> GetCurrentBackTexture() = 0;
 
+    // ImGui
+    virtual void* CreateImTextureID(Ref<RHITexture2D> texture) = 0;
+
     // Resources
     virtual Ref<RHITexture2D> CreateRHITexture2D(RHITexture2DCreateDesc desc) = 0;
     virtual Ref<RHIRenderPass> CreateRHIRenderPass(RHIRenderPassCreateDesc desc) = 0;
@@ -47,6 +50,8 @@ public:
     // Command
     virtual bool BeginCommandBuffer(Ref<RHICommandBuffer> cmdBuffer) = 0;
     virtual bool EndCommandBuffer(Ref<RHICommandBuffer> cmdBuffer) = 0;
+    virtual void CmdPushEvent(Ref<RHICommandBuffer> cmdBuffer, const char* name, RHIColor color) = 0;
+    virtual void CmdPopEvent(Ref<RHICommandBuffer> cmdBuffer) = 0;
     virtual void CmdBeginRenderPass(Ref<RHICommandBuffer> cmdBuffer, RHIRenderPassBeginInfo beginIhfo) = 0;
     virtual void CmdEndRenderPass(Ref<RHICommandBuffer> cmdBuffer) = 0;
     virtual void CmdClearColor(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> texture, RHIColor color) = 0;
