@@ -1,11 +1,15 @@
 ﻿#include "VulkanRHI.h"
 #include <set>
 #include <array>
+#include <fstream>
+#include <ostream>
+#include "shaderc/shaderc.hpp"
 #include "ThirdParty/imgui/backends/imgui_impl_vulkan.h"
 #include "MediaEngine/Include/Core/Assert.h"
 #include "../RenderLog.h"
 #include "VulkanRHIUtils.h"
 #include "VulkanRHIFramebuffer.h"
+#include "VulkanRHIBuffer.h"
 
 namespace ME
 {
@@ -94,6 +98,8 @@ bool VulkanRHI::Initialize(std::shared_ptr<Window> wnd)
         RENDER_LOG_ERROR("CreateSampler fail");
         return false;
     }
+
+    vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &m_MemoryProperties);
 
     m_VkCmdBeginDebugUtilsLabelEXT =
         (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(m_Instance, "vkCmdBeginDebugUtilsLabelEXT");
@@ -253,6 +259,66 @@ void VulkanRHI::DestroyImTextureID(void* imTextureID)
 {
     VkDescriptorSet descriptorSet = (VkDescriptorSet)imTextureID;
     vkFreeDescriptorSets(m_Device, m_DescriptorPool, 1, &descriptorSet);
+}
+
+Ref<RHIBuffer> VulkanRHI::CreateRHIBuffer(RHIBufferCreateDesc createDesc)
+{
+    Ref<VulkanRHIBuffer> rhiBuffer = CreateRef<VulkanRHIBuffer>();
+
+    // create VkBuffer
+    VkBufferCreateInfo bufferCreateInfo;
+    bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferCreateInfo.pNext = nullptr;
+    bufferCreateInfo.flags = 0;
+    bufferCreateInfo.size = createDesc.BufferSize;
+    bufferCreateInfo.usage = Util::ConvertERHIBufferUsageToVkBufferUsageFlagBits(createDesc.BufferUsage);
+    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferCreateInfo.queueFamilyIndexCount = 0;
+    bufferCreateInfo.pQueueFamilyIndices = nullptr;
+
+    VkResult res = vkCreateBuffer(m_Device, &bufferCreateInfo, nullptr, &rhiBuffer->Buffer);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateBuffer fail");
+        return nullptr;
+    }
+
+    // allocate and bind memory
+    VkMemoryRequirements memRequirement;
+    vkGetBufferMemoryRequirements(m_Device, rhiBuffer->Buffer, &memRequirement);
+
+    VkMemoryAllocateInfo memAlloInfo;
+    memAlloInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memAlloInfo.pNext = nullptr;
+    memAlloInfo.allocationSize = memRequirement.size;
+    memAlloInfo.memoryTypeIndex = FindMemoryIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memRequirement.size);
+    res = vkAllocateMemory(m_Device, &memAlloInfo, nullptr, &rhiBuffer->BufferMem);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkAllocateMemory fail");
+        return nullptr;
+    }
+
+    res = vkBindBufferMemory(m_Device, rhiBuffer->Buffer, rhiBuffer->BufferMem, 0);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkBindBufferMemory fail");
+        return nullptr;
+    }
+
+    // map data
+    void* data = nullptr;
+    res = vkMapMemory(m_Device, rhiBuffer->BufferMem, 0, memRequirement.size, 0, &data);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkMapMemory fail");
+        return nullptr;
+    }
+
+    memcpy(data, createDesc.Data, createDesc.BufferSize);
+    vkUnmapMemory(m_Device, rhiBuffer->BufferMem);
+
+    return rhiBuffer;
 }
 
 Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
@@ -448,6 +514,197 @@ Ref<RHIFramebuffer> VulkanRHI::CreateRHIFramebuffer(
     }
 
     return framebuffer;
+}
+
+Ref<RHIShader> VulkanRHI::CreateRHIShader(RHIShaderCreateInfo createInfo)
+{
+    ShaderSpv shaderSpv = CreateSPIRVFromFile(createInfo.ShaderFile, createInfo.Type);
+
+    VkShaderModuleCreateInfo shaderModuleCreateInfo;
+    shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shaderModuleCreateInfo.pNext = nullptr;
+    shaderModuleCreateInfo.flags = 0;
+    shaderModuleCreateInfo.codeSize = shaderSpv.CodeSize;
+    shaderModuleCreateInfo.pCode = shaderSpv.Code.data();
+
+    Ref<VulkanRHIShader> rhiShader = CreateRef<VulkanRHIShader>();
+    rhiShader->Type = createInfo.Type;
+    rhiShader->EntryName = createInfo.EntryName;
+    VkResult res = vkCreateShaderModule(m_Device, &shaderModuleCreateInfo, nullptr, &rhiShader->ShaderModule);
+    if (res != VK_SUCCESS)
+    {
+        ME_ASSERT(false, "vkCreateShaderModule fail");
+        return nullptr;
+    }
+
+    return rhiShader;
+}
+
+Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreateInfo createInfo)
+{
+    // shader
+    std::vector<VkPipelineShaderStageCreateInfo> pipelineShaderStages;
+    for (auto& shader : createInfo.Shaders)
+    {
+        Ref<VulkanRHIShader> vulkanShader = std::dynamic_pointer_cast<VulkanRHIShader>(shader);
+        VkPipelineShaderStageCreateInfo shaderStage;
+        shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        shaderStage.pNext = nullptr;
+        shaderStage.flags = 0;
+        shaderStage.stage = Util::ConvertRHIShaderTypeToVkShaderStageFlagBits(vulkanShader->Type);
+        shaderStage.module = vulkanShader->ShaderModule;
+        shaderStage.pName = vulkanShader->EntryName.c_str();
+        shaderStage.pSpecializationInfo = nullptr;
+        pipelineShaderStages.push_back(shaderStage);
+    }
+
+    // vertex layout
+    VkVertexInputBindingDescription vertexInputBindingDescription;
+    vertexInputBindingDescription.binding = 0;
+    vertexInputBindingDescription.stride = createInfo.VertexInputLayout.GetStride();
+    vertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    std::vector<VkVertexInputAttributeDescription> vertexInputDescs;
+    for (auto& vertexInput : createInfo.VertexInputLayout.GetElements())
+    {
+        VkVertexInputAttributeDescription desc;
+        desc.location = vertexInput.Location;
+        desc.binding = 0;
+        desc.format = Util::ConvertERHIShaderDataTypeToVkFormat(vertexInput.Type);
+        desc.offset = vertexInput.Offset;
+        vertexInputDescs.push_back(desc);
+    }
+
+    VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
+    pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    pipelineVertexInputStateCreateInfo.pNext = nullptr;
+    pipelineVertexInputStateCreateInfo.flags = 0;
+    pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
+    pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
+    pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = vertexInputDescs.size();
+    pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputDescs.data();
+
+    // Assembly
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyState;
+    inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssemblyState.pNext = nullptr;
+    inputAssemblyState.flags = 0;
+    RHIPrimitiveTopology primitiveTopology = createInfo.InputAssemblyInfo.PrimitiveTopology;
+    inputAssemblyState.topology = Util::ConvertRHIPrimitiveTopologyToVkPrimitiveTopology(primitiveTopology);
+    inputAssemblyState.primitiveRestartEnable = VK_FALSE;
+
+    // viewport
+    VkViewport dummyViewport;
+    dummyViewport.x = 0;
+    dummyViewport.y = 0;
+    dummyViewport.width = 1;
+    dummyViewport.height = 1;
+    dummyViewport.minDepth = 0.1;
+    dummyViewport.maxDepth = 1000;
+
+    VkRect2D dummyScissor;
+    dummyScissor.offset = {0, 0};
+    dummyScissor.extent = {1, 1};
+
+    VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo;
+    pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    pipelineViewportStateCreateInfo.pNext = nullptr;
+    pipelineViewportStateCreateInfo.flags = 0;
+    pipelineViewportStateCreateInfo.viewportCount = 1;
+    pipelineViewportStateCreateInfo.pViewports = &dummyViewport;
+    pipelineViewportStateCreateInfo.scissorCount = 1;
+    pipelineViewportStateCreateInfo.pScissors = &dummyScissor;
+
+    // Rasterization
+    VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo;
+    pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    pipelineRasterizationStateCreateInfo.pNext = nullptr;
+    pipelineRasterizationStateCreateInfo.flags = 0;
+    pipelineRasterizationStateCreateInfo.depthClampEnable = VK_FALSE;
+    pipelineRasterizationStateCreateInfo.rasterizerDiscardEnable = VK_FALSE;
+    pipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+    pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
+    pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    pipelineRasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
+    pipelineRasterizationStateCreateInfo.depthBiasConstantFactor = 0;
+    pipelineRasterizationStateCreateInfo.depthBiasClamp = 0;
+    pipelineRasterizationStateCreateInfo.depthBiasSlopeFactor = 0;
+    pipelineRasterizationStateCreateInfo.lineWidth = 1;
+
+    // Multisample State
+    VkPipelineMultisampleStateCreateInfo multisampleState = {};
+    multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampleState.pNext = nullptr;
+    multisampleState.flags = 0;
+    multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisampleState.sampleShadingEnable = VK_FALSE;
+    multisampleState.minSampleShading = 1;
+    multisampleState.pSampleMask = nullptr;
+    multisampleState.alphaToCoverageEnable = VK_FALSE;
+    multisampleState.alphaToOneEnable = VK_FALSE;
+
+    // Color Blend
+    VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+    colorBlendAttachment.blendEnable = VK_FALSE;
+
+    VkPipelineColorBlendStateCreateInfo colorBlend;
+    colorBlend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlend.pNext = nullptr;
+    colorBlend.flags = 0;
+    colorBlend.logicOpEnable = VK_FALSE;
+    colorBlend.logicOp = VK_LOGIC_OP_CLEAR;
+    colorBlend.attachmentCount = 1;
+    colorBlend.pAttachments = &colorBlendAttachment;
+    colorBlend.blendConstants[0] = 0;
+    colorBlend.blendConstants[1] = 0;
+    colorBlend.blendConstants[2] = 0;
+    colorBlend.blendConstants[3] = 0;
+
+    // Dynamic State
+    VkDynamicState dynamicStates[2] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo;
+    pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    pipelineDynamicStateCreateInfo.pNext = nullptr;
+    pipelineDynamicStateCreateInfo.flags = 0;
+    pipelineDynamicStateCreateInfo.dynamicStateCount = 2;
+    pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates;
+
+    // render pass
+    Ref<VulkanRHIRenderPass> renderPass = std::dynamic_pointer_cast<VulkanRHIRenderPass>(createInfo.RenderPass);
+
+    VkGraphicsPipelineCreateInfo graphicPipelineCreateInfo;
+    graphicPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    graphicPipelineCreateInfo.pNext = nullptr;
+    graphicPipelineCreateInfo.flags = VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT;
+    graphicPipelineCreateInfo.stageCount = pipelineShaderStages.size();
+    graphicPipelineCreateInfo.pStages = pipelineShaderStages.data();
+    graphicPipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
+    graphicPipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
+    graphicPipelineCreateInfo.pTessellationState = nullptr;
+    graphicPipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;
+    graphicPipelineCreateInfo.pRasterizationState = &pipelineRasterizationStateCreateInfo;
+    graphicPipelineCreateInfo.pMultisampleState = nullptr;
+    //graphicPipelineCreateInfo.pMultisampleState = &multisampleState;
+    graphicPipelineCreateInfo.pDepthStencilState = nullptr;
+    graphicPipelineCreateInfo.pColorBlendState = nullptr;
+    //graphicPipelineCreateInfo.pColorBlendState = &colorBlend;
+    graphicPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
+    graphicPipelineCreateInfo.layout = VK_NULL_HANDLE;
+    graphicPipelineCreateInfo.renderPass = renderPass->RenderPass;
+    graphicPipelineCreateInfo.subpass = 0;
+    graphicPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+    graphicPipelineCreateInfo.basePipelineIndex = 0;
+
+    Ref<VulkanRHIGraphicPipeline> pipeline = CreateRef<VulkanRHIGraphicPipeline>();
+    VkResult res = vkCreateGraphicsPipelines(
+        m_Device, VK_NULL_HANDLE, 1, &graphicPipelineCreateInfo, nullptr, &pipeline->Pipeline);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateGraphicsPipelines fail");
+        return nullptr;
+    }
+
+    return pipeline;
 }
 
 void VulkanRHI::DestroyRHITexture2D(Ref<RHITexture2D> texture)
@@ -659,6 +916,68 @@ void VulkanRHI::CmdCopyTexture(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
 }
 
+void VulkanRHI::CmdBindGraphicPipeline(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIGraphicPipeline> pipeline)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    Ref<VulkanRHIGraphicPipeline> vulkanPipeline = std::dynamic_pointer_cast<VulkanRHIGraphicPipeline>(pipeline);
+    vkCmdBindPipeline(vulkanCmdBuffer->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipeline->Pipeline);
+}
+
+void VulkanRHI::CmdSetViewport(Ref<RHICommandBuffer> cmdBuffer, RHIViewport viewport)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    VkViewport view;
+    view.x = viewport.X;
+    view.y = viewport.Y;
+    view.width = viewport.Width;
+    view.height = viewport.Height;
+    view.minDepth = viewport.MinDepth;
+    view.maxDepth = viewport.MaxDepth;
+    vkCmdSetViewport(vulkanCmdBuffer->CommandBuffer, 0, 1, &view);
+}
+
+void VulkanRHI::CmdSetScissor(Ref<RHICommandBuffer> cmdBuffer, RHIScissor scissor)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    VkRect2D tmp;
+    tmp.offset.x = scissor.OffsetX;
+    tmp.offset.y = scissor.OffsetY;
+    tmp.extent.width = scissor.Width;
+    tmp.extent.height = scissor.Height;
+    vkCmdSetScissor(vulkanCmdBuffer->CommandBuffer, 0, 1, &tmp);
+}
+
+void VulkanRHI::CmdBindVertexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    Ref<VulkanRHIBuffer> vulkanBuffer = std::dynamic_pointer_cast<VulkanRHIBuffer>(buffer);
+
+    VkDeviceSize offsets[1] = {0};
+    vkCmdBindVertexBuffers(vulkanCmdBuffer->CommandBuffer, 0, 1, &vulkanBuffer->Buffer, offsets);
+}
+
+void VulkanRHI::CmdBindIndexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    Ref<VulkanRHIBuffer> vulkanBuffer = std::dynamic_pointer_cast<VulkanRHIBuffer>(buffer);
+
+    VkDeviceSize indexOffset = 0;
+    vkCmdBindIndexBuffer(vulkanCmdBuffer->CommandBuffer, vulkanBuffer->Buffer, indexOffset, VK_INDEX_TYPE_UINT32);
+}
+
+void VulkanRHI::CmdDrawIndexed(
+    Ref<RHICommandBuffer> cmdBuffer,
+    uint32_t indexCount,
+    uint32_t instanceCount,
+    uint32_t firstIndex,
+    int32_t vertexOffset,
+    uint32_t firstInstance)
+{
+    Ref<VulkanRHICommandBuffer> vulkanCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    vkCmdDrawIndexed(
+        vulkanCmdBuffer->CommandBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+}
+
 VkInstance VulkanRHI::GetInstance()
 {
     return m_Instance;
@@ -765,7 +1084,7 @@ VkInstance VulkanRHI::CreateInstance()
     instanceCreateInfo.flags = 0;
     instanceCreateInfo.pApplicationInfo = &appInfo;
     instanceCreateInfo.enabledLayerCount = 0;
-    instanceCreateInfo.ppEnabledExtensionNames = nullptr;
+    instanceCreateInfo.ppEnabledLayerNames = nullptr;
     instanceCreateInfo.enabledExtensionCount = (uint32_t)toEnableExtensions.size();
     instanceCreateInfo.ppEnabledExtensionNames = toEnableExtensions.data();
 
@@ -1248,6 +1567,65 @@ VkSampler VulkanRHI::CreateSampler(VkDevice device)
     }
 
     return sampler;
+}
+
+VulkanRHI::ShaderSpv VulkanRHI::CreateSPIRVFromFile(const std::string& path, ERHIShaderType shaderType)
+{
+    std::string glslShader;
+    std::ifstream in(path, std::ios::in | std::ios::binary);
+    if (in)
+    {
+        in.seekg(0, std::ios::end);
+        glslShader.resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read(&glslShader[0], glslShader.size());
+        in.close();
+    }
+    else
+    {
+        ME_ASSERT(false, "Read shader file fail");
+    }
+
+    shaderc::Compiler compiler;
+    shaderc::CompileOptions options;
+    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_0);
+    shaderc_shader_kind shaderKind = Util::ConvertRHIShaderTypeToShaderKind(shaderType);
+    shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(glslShader, shaderKind, path.c_str(), options);
+    shaderc_compilation_status status = module.GetCompilationStatus();
+    if (status != shaderc_compilation_status_success)
+    {
+        RENDER_LOG_ERROR("Compile shader fail: {}", module.GetErrorMessage());
+        ME_ASSERT(false, "Compile shader fail");
+    }
+
+    std::vector<uint32_t> spirvRes = std::vector<uint32_t>(module.cbegin(), module.cend());
+    ShaderSpv res;
+    res.Code = spirvRes;
+    res.CodeSize = spirvRes.size() * sizeof(uint32_t);
+    return res;
+}
+
+uint32_t VulkanRHI::FindMemoryIndex(VkMemoryPropertyFlags requiredFlags, VkDeviceSize size)
+{
+    uint32_t memTypeIndex = VK_MAX_MEMORY_TYPES;
+    for (uint32_t i = 0; i < m_MemoryProperties.memoryTypeCount; ++i)
+    {
+        if ((m_MemoryProperties.memoryTypes[i].propertyFlags & requiredFlags) == requiredFlags)
+        {
+            bool isHeapIndexValid = false;
+            for (uint32_t j = 0; j < m_MemoryProperties.memoryHeapCount; ++j)
+            {
+                if (m_MemoryProperties.memoryTypes[i].heapIndex == j && size <= m_MemoryProperties.memoryHeaps[j].size)
+                {
+                    isHeapIndexValid = true;
+                    memTypeIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    return memTypeIndex;
 }
 
 }  //namespace ME

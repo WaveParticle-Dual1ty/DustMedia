@@ -6,6 +6,7 @@
 #include "RHIResources.h"
 #include "RHITexture.h"
 #include "RHIFramebuffer.h"
+#include "RHIBuffer.h"
 
 namespace ME
 {
@@ -36,6 +37,7 @@ public:
     virtual void DestroyImTextureID(void* imTextureID) = 0;
 
     // Resources
+    virtual Ref<RHIBuffer> CreateRHIBuffer(RHIBufferCreateDesc createDesc) = 0;
     virtual Ref<RHITexture2D> CreateRHITexture2D(RHITexture2DCreateDesc desc) = 0;
     virtual Ref<RHIRenderPass> CreateRHIRenderPass(RHIRenderPassCreateDesc desc) = 0;
     virtual Ref<RHIFramebuffer> CreateRHIFramebuffer(
@@ -43,6 +45,8 @@ public:
         uint32_t height,
         Ref<RHIRenderPass> renderPass,
         std::vector<Ref<RHITexture2D>>& textures) = 0;
+    virtual Ref<RHIShader> CreateRHIShader(RHIShaderCreateInfo createInfo) = 0;
+    virtual Ref<RHIGraphicPipeline> CreateGraphicPipeline(RHIGraphicPipelineCreateInfo createInfo) = 0;
 
     virtual void DestroyRHITexture2D(Ref<RHITexture2D> texture) = 0;
     virtual void DestroyRHIRenderPass(Ref<RHIRenderPass> renderPass) = 0;
@@ -58,5 +62,17 @@ public:
     virtual void CmdClearColor(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> texture, RHIColor color) = 0;
     virtual void CmdPipelineBarrier(Ref<RHICommandBuffer> cmdBuffer, RHIPipelineBarrierInfo barrierInfo) = 0;
     virtual void CmdCopyTexture(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> src, Ref<RHITexture2D> dst) = 0;
+    virtual void CmdBindGraphicPipeline(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIGraphicPipeline> pipeline) = 0;
+    virtual void CmdSetViewport(Ref<RHICommandBuffer> cmdBuffer, RHIViewport viewport) = 0;
+    virtual void CmdSetScissor(Ref<RHICommandBuffer> cmdBuffer, RHIScissor scissor) = 0;
+    virtual void CmdBindVertexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) = 0;
+    virtual void CmdBindIndexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) = 0;
+    virtual void CmdDrawIndexed(
+        Ref<RHICommandBuffer> cmdBuffer,
+        uint32_t indexCount,
+        uint32_t instanceCount,
+        uint32_t firstIndex,
+        int32_t vertexOffset,
+        uint32_t firstInstance) = 0;
 };
 }  //namespace ME

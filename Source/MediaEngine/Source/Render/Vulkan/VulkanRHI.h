@@ -37,6 +37,7 @@ public:
     virtual void DestroyImTextureID(void* imTextureID) override;
 
     // Resources
+    virtual Ref<RHIBuffer> CreateRHIBuffer(RHIBufferCreateDesc createDesc) override;
     virtual Ref<RHITexture2D> CreateRHITexture2D(RHITexture2DCreateDesc desc) override;
     virtual Ref<RHIRenderPass> CreateRHIRenderPass(RHIRenderPassCreateDesc desc) override;
     virtual Ref<RHIFramebuffer> CreateRHIFramebuffer(
@@ -44,6 +45,8 @@ public:
         uint32_t height,
         Ref<RHIRenderPass> renderPass,
         std::vector<Ref<RHITexture2D>>& textures) override;
+    virtual Ref<RHIShader> CreateRHIShader(RHIShaderCreateInfo createInfo) override;
+    virtual Ref<RHIGraphicPipeline> CreateGraphicPipeline(RHIGraphicPipelineCreateInfo createInfo) override;
 
     virtual void DestroyRHITexture2D(Ref<RHITexture2D> texture) override;
     virtual void DestroyRHIRenderPass(Ref<RHIRenderPass> renderPass) override;
@@ -59,6 +62,18 @@ public:
     virtual void CmdClearColor(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> texture, RHIColor color) override;
     virtual void CmdPipelineBarrier(Ref<RHICommandBuffer> cmdBuffer, RHIPipelineBarrierInfo barrierInfo) override;
     virtual void CmdCopyTexture(Ref<RHICommandBuffer> cmdBuffer, Ref<RHITexture2D> src, Ref<RHITexture2D> dst) override;
+    virtual void CmdBindGraphicPipeline(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIGraphicPipeline> pipeline) override;
+    virtual void CmdSetViewport(Ref<RHICommandBuffer> cmdBuffer, RHIViewport viewport) override;
+    virtual void CmdSetScissor(Ref<RHICommandBuffer> cmdBuffer, RHIScissor scissor) override;
+    virtual void CmdBindVertexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) override;
+    virtual void CmdBindIndexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) override;
+    virtual void CmdDrawIndexed(
+        Ref<RHICommandBuffer> cmdBuffer,
+        uint32_t indexCount,
+        uint32_t instanceCount,
+        uint32_t firstIndex,
+        int32_t vertexOffset,
+        uint32_t firstInstance) override;
 
 public:
     struct VulkanQueue
@@ -123,6 +138,17 @@ private:
     VkSampler CreateSampler(VkDevice device);
 
 private:
+    struct ShaderSpv
+    {
+        std::vector<uint32_t> Code;
+        uint32_t CodeSize = 0;
+    };
+
+    ShaderSpv CreateSPIRVFromFile(const std::string& path, ERHIShaderType shaderType);
+
+    uint32_t FindMemoryIndex(VkMemoryPropertyFlags requiredFlags, VkDeviceSize size);
+
+private:
     VkInstance m_Instance = VK_NULL_HANDLE;
     VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
@@ -143,6 +169,7 @@ private:
     uint32_t m_GraphicSemaphoreCnt = 0;
     uint32_t m_GraphicSemaphoreIndex = 0;
     VkSampler m_Sampler = VK_NULL_HANDLE;
+    VkPhysicalDeviceMemoryProperties m_MemoryProperties;
 
 private:
     PFN_vkCmdBeginDebugUtilsLabelEXT m_VkCmdBeginDebugUtilsLabelEXT = nullptr;

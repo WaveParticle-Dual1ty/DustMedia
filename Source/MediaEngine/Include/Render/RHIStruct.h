@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <cstdint>
+#include <string>
 #include "RHIResources.h"
+#include "RHIBuffer.h"
 #include "RHITexture.h"
 #include "RHIFrameBuffer.h"
 
@@ -166,10 +168,6 @@ struct RHIRenderPassBeginInfo
     RHIColorClearValue ColorClearValue;
     Ref<RHIRenderPass> RenderPass;
     Ref<RHIFramebuffer> Framebuffer;
-};
-
-struct RHIBuffer
-{
 };
 
 struct RHIPipelineBarrierInfo

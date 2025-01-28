@@ -14,4 +14,14 @@ struct VulkanRHIRenderPass : RHIRenderPass
     VkRenderPass RenderPass = VK_NULL_HANDLE;
 };
 
+struct VulkanRHIShader : RHIShader
+{
+    VkShaderModule ShaderModule = VK_NULL_HANDLE;
+};
+
+struct VulkanRHIGraphicPipeline : public RHIGraphicPipeline
+{
+    VkPipeline Pipeline = VK_NULL_HANDLE;
+};
+
 }  //namespace ME

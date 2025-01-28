@@ -436,6 +436,161 @@ VkImageLayout ConvertERHIImageLayoutToVkImageLayout(ERHIImageLayout flag)
 
     return res;
 }
+
+shaderc_shader_kind ConvertRHIShaderTypeToShaderKind(ERHIShaderType type)
+{
+    switch (type)
+    {
+        case ERHIShaderType::Vertex:
+            return shaderc_vertex_shader;
+        case ERHIShaderType::Pixel:
+            return shaderc_fragment_shader;
+        default:
+            ME_ASSERT(false, "Not support ERHIShaderType now");
+            return shaderc_vertex_shader;
+    }
+}
+
+VkShaderStageFlagBits ConvertRHIShaderTypeToVkShaderStageFlagBits(ERHIShaderType type)
+{
+    switch (type)
+    {
+        case ERHIShaderType::Vertex:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ERHIShaderType::Pixel:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+        default:
+            ME_ASSERT(false, "Not support ERHIShaderType now");
+            return VK_SHADER_STAGE_VERTEX_BIT;
+    }
+}
+
+VkFormat ConvertERHIShaderDataTypeToVkFormat(ERHIShaderDataType type)
+{
+    switch (type)
+    {
+        case ERHIShaderDataType::None:
+            ME_ASSERT(false, "ERHIShaderDataType is None");
+            return VK_FORMAT_UNDEFINED;
+        case ERHIShaderDataType::Float:
+            return VK_FORMAT_R32_SFLOAT;
+        case ERHIShaderDataType::Float2:
+            return VK_FORMAT_R32G32_SFLOAT;
+        case ERHIShaderDataType::Float3:
+            return VK_FORMAT_R32G32B32_SFLOAT;
+        case ERHIShaderDataType::Float4:
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case ERHIShaderDataType::Mat3:
+            ME_ASSERT(false, "Not supoort ERHIShaderDataType now");
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case ERHIShaderDataType::Mat4:
+            ME_ASSERT(false, "Not supoort ERHIShaderDataType now");
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case ERHIShaderDataType::Int:
+            ME_ASSERT(false, "Not supoort ERHIShaderDataType now");
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case ERHIShaderDataType::Int2:
+            ME_ASSERT(false, "Not supoort ERHIShaderDataType now");
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case ERHIShaderDataType::Int3:
+            ME_ASSERT(false, "Not supoort ERHIShaderDataType now");
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case ERHIShaderDataType::Int4:
+            ME_ASSERT(false, "Not supoort ERHIShaderDataType now");
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case ERHIShaderDataType::Bool:
+            ME_ASSERT(false, "Not supoort ERHIShaderDataType now");
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        default:
+            ME_ASSERT(false, "Not supoort ERHIShaderDataType now");
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+    }
+}
+
+VkPrimitiveTopology ConvertRHIPrimitiveTopologyToVkPrimitiveTopology(RHIPrimitiveTopology type)
+{
+    switch (type)
+    {
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_POINT_LIST:
+            return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_LINE_LIST:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_LINE_STRIP:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_PATCH_LIST:
+            return VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+        case RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_MAX_ENUM:
+            return VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
+        default:
+            ME_ASSERT(false, "Not supoort RHIPrimitiveTopology now");
+            return VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
+    }
+}
+
+VkBufferUsageFlagBits ConvertERHIBufferUsageToVkBufferUsageFlagBits(ERHIBufferUsage type)
+{
+    switch (type)
+    {
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_TRANSFER_SRC_BIT:
+            return VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_TRANSFER_DST_BIT:
+            return VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT:
+            return VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT:
+            return VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_UNIFORM_BUFFER_BIT:
+            return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_STORAGE_BUFFER_BIT:
+            return VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_INDEX_BUFFER_BIT:
+            return VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_VERTEX_BUFFER_BIT:
+            return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_INDIRECT_BUFFER_BIT:
+            return VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT:
+            return VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT:
+            return VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT:
+            return VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT:
+            return VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR:
+            return VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR:
+            return VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR:
+            return VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_RAY_TRACING_BIT_NV:
+            return VK_BUFFER_USAGE_RAY_TRACING_BIT_NV;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT:
+            return VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR:
+            return VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR;
+        case ERHIBufferUsage::RHI_BUFFER_USAGE_FLAG_BITS_MAX_ENUM:
+            return VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM;
+        default:
+            ME_ASSERT(false, "Not supoort ERHIBufferUsage now");
+            return VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM;
+    }
+}
+
 }  //namespace Util
 
 }  //namespace ME
