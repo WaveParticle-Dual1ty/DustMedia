@@ -757,7 +757,7 @@ VkInstance VulkanRHI::CreateInstance()
     appInfo.applicationVersion = 1;
     appInfo.pEngineName = "Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion = VK_MAKE_VERSION(1, 1, 0);
 
     VkInstanceCreateInfo instanceCreateInfo;
     instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
