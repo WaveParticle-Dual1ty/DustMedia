@@ -1,4 +1,5 @@
 add_subdirectory(ThirdParty)
 add_subdirectory(MediaEngine)
+add_subdirectory(EmptyApp)
 add_subdirectory(Sandbox)
 
