@@ -13,6 +13,8 @@ namespace ME
 struct ApplicationSpecification
 {
     std::string Name = "Application";
+    std::string BinPath;
+    std::string ResourcePath;
 };
 
 class Application
@@ -26,6 +28,8 @@ public:
     void Run();
     Window& GetWindow();
     Ref<RHI> GetRHI();
+    const std::string& GetBinPath();
+    const std::string& GetResourcePath();
 
 protected:
     void PushLayer(std::shared_ptr<Layer> layer);

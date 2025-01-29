@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <array>
+#include "MediaEngine/Include/Render/RHIBuffer.h"
 #include "MediaEngine/Include/Render/RenderPass.h"
+
 using namespace ME;
 
 class TestRenderPass : public ME::FRenderPass
@@ -18,7 +20,28 @@ public:
     void SetColor(std::array<float, 4> color);
 
 private:
+    struct Vertex
+    {
+        std::array<float, 4> Position = {0, 0, 0, 0};
+        std::array<float, 4> Color = {0, 0, 0, 0};
+        std::array<float, 2> Texcoord = {0, 0};
+    };
+
+    struct Index
+    {
+        uint32_t Index1 = 0;
+        uint32_t Index2 = 0;
+        uint32_t Index3 = 0;
+    };
+
     std::vector<Ref<RHITexture2D>> m_TargetTextures;
     void* m_TargetImTextureID = nullptr;
     std::array<float, 4> m_ClearColor = {0, 0, 0, 1};
+
+    Ref<RHIShader> m_VertexShader;
+    Ref<RHIShader> m_PixelShader;
+    Ref<RHIGraphicPipeline> m_Pipeline;
+
+    Ref<RHIBuffer> m_VertexBuffer;
+    Ref<RHIBuffer> m_IndexBuffer;
 };

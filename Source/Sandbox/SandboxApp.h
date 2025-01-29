@@ -7,7 +7,7 @@
 class SandboxApp : public ME::Application
 {
 public:
-    SandboxApp();
+    SandboxApp(const std::string& binPath, const std::string& resourcePath);
 
 private:
     virtual bool OnEngineInit() override;

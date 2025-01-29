@@ -1,6 +1,7 @@
 ﻿#include "SandboxApp.h"
 #include <memory>
 #include <iostream>
+#include <filesystem>
 #include "MediaEngine/Include/Core/Core.h"
 #include "MediaEngine/Include/Application/EntryPoint.h"
 #include "MediaEngine/Include/Application/Application.h"
@@ -9,11 +10,14 @@
 
 std::unique_ptr<ME::Application> ME::CreateApplication()
 {
-    return std::make_unique<SandboxApp>();
+    std::filesystem::path binPath = std::filesystem::current_path();
+    std::filesystem::path resourcePath = binPath / "Resources/Sandbox";
+    resourcePath = std::filesystem::absolute(resourcePath);
+    return std::make_unique<SandboxApp>(binPath.string(), resourcePath.string());
 }
 
-SandboxApp::SandboxApp()
-    : Application({"Sandbox"})
+SandboxApp::SandboxApp(const std::string& binPath, const std::string& resourcePath)
+    : Application({"Sandbox", binPath, resourcePath})
 {
 }
 

@@ -35,4 +35,5 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include_directories(${PROJ_SRC_DIR})
 
 add_subdirectory(Source)
+add_subdirectory(Resources)
 

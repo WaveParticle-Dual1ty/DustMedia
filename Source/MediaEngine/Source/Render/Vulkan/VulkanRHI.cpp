@@ -291,7 +291,29 @@ Ref<RHIBuffer> VulkanRHI::CreateRHIBuffer(RHIBufferCreateDesc createDesc)
     memAlloInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memAlloInfo.pNext = nullptr;
     memAlloInfo.allocationSize = memRequirement.size;
-    memAlloInfo.memoryTypeIndex = FindMemoryIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memRequirement.size);
+    //memAlloInfo.memoryTypeIndex = FindMemoryIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memRequirement.size);
+    // Find a memory type index that fits the properties of the buffer
+    VkMemoryPropertyFlags memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    bool memTypeFound = false;
+    for (uint32_t i = 0; i < m_MemoryProperties.memoryTypeCount; i++)
+    {
+        if ((memRequirement.memoryTypeBits & 1) == 1)
+        {
+            if ((m_MemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
+            {
+                memAlloInfo.memoryTypeIndex = i;
+                memTypeFound = true;
+            }
+        }
+        memRequirement.memoryTypeBits >>= 1;
+    }
+
+    if (!memTypeFound)
+    {
+        RENDER_LOG_ERROR("memTypeFound is nullptr");
+        return nullptr;
+    }
+
     res = vkAllocateMemory(m_Device, &memAlloInfo, nullptr, &rhiBuffer->BufferMem);
     if (res != VK_SUCCESS)
     {
@@ -669,6 +691,24 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     pipelineDynamicStateCreateInfo.dynamicStateCount = 2;
     pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStates;
 
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
+    pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutCreateInfo.pNext = nullptr;
+    pipelineLayoutCreateInfo.flags = 0;
+    pipelineLayoutCreateInfo.setLayoutCount = 0;
+    pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+    pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+    pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+
+    // Layout
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+    VkResult result = vkCreatePipelineLayout(m_Device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+    if (result != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreatePipelineLayout fail");
+        return nullptr;
+    }
+
     // render pass
     Ref<VulkanRHIRenderPass> renderPass = std::dynamic_pointer_cast<VulkanRHIRenderPass>(createInfo.RenderPass);
 
@@ -689,7 +729,7 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     graphicPipelineCreateInfo.pColorBlendState = nullptr;
     //graphicPipelineCreateInfo.pColorBlendState = &colorBlend;
     graphicPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
-    graphicPipelineCreateInfo.layout = VK_NULL_HANDLE;
+    graphicPipelineCreateInfo.layout = pipelineLayout;
     graphicPipelineCreateInfo.renderPass = renderPass->RenderPass;
     graphicPipelineCreateInfo.subpass = 0;
     graphicPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;

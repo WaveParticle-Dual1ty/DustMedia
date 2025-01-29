@@ -149,6 +149,16 @@ Ref<RHI> Application::GetRHI()
     return m_RHI;
 }
 
+const std::string& Application::GetBinPath()
+{
+    return m_AppSpec.BinPath;
+}
+
+const std::string& Application::GetResourcePath()
+{
+    return m_AppSpec.ResourcePath;
+}
+
 void Application::PushLayer(std::shared_ptr<Layer> layer)
 {
     m_LayerStack->PushLayer(layer);
@@ -190,7 +200,7 @@ bool Application::InitApp()
     }
 
     m_LayerStack = std::make_shared<LayerStack>();
-    if (m_EnableUI)
+    //if (m_EnableUI)
     {
         m_ImGuiRenderPass = CreateRef<ImGuiRenderPass>(m_RHI);
         uint32_t w = m_Window->GetWidth();
