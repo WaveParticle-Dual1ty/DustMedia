@@ -39,7 +39,11 @@ void VulkanImGuiLayer::OnEvent(Event& event)
     static_cast<void>(event);
 }
 
-bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> rhiRenderPass)
+bool VulkanImGuiLayer::Init(
+    const std::string& iniFilename,
+    Ref<Window> wnd,
+    Ref<RHI> rhi,
+    Ref<RHIRenderPass> renderPass)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -49,6 +53,8 @@ bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> rh
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    io.IniFilename = iniFilename.c_str();
 
     ImGui::StyleColorsDark();
 
@@ -60,7 +66,7 @@ bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> rh
     }
 
     Ref<VulkanRHI> vulkanRHI = std::dynamic_pointer_cast<VulkanRHI>(rhi);
-    Ref<VulkanRHIRenderPass> vulkanRHIRenderPass = std::dynamic_pointer_cast<VulkanRHIRenderPass>(rhiRenderPass);
+    Ref<VulkanRHIRenderPass> vulkanRHIRenderPass = std::dynamic_pointer_cast<VulkanRHIRenderPass>(renderPass);
     GLFWwindow* glfwWnd = (GLFWwindow*)wnd->GetNativeWindow();
 
     bool ret = ImGui_ImplGlfw_InitForVulkan(glfwWnd, true);

@@ -16,7 +16,8 @@ public:
     virtual void OnUIUpdate() override;
     virtual void OnEvent(Event& event) override;
 
-    virtual bool Init(Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> rhiRenderPass) override;
+    virtual bool Init(const std::string& iniFilename, Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> renderPass)
+        override;
     virtual void Begin() override;
     virtual void End() override;
 

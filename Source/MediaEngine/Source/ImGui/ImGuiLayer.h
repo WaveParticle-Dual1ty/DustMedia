@@ -16,7 +16,7 @@ public:
     static Ref<ImGuiLayer> Create(RHI::API api);
 
 public:
-    virtual bool Init(Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> rhiRenderPass) = 0;
+    virtual bool Init(const std::string& iniFilename, Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> renderPass) = 0;
     virtual void Begin() = 0;
     virtual void End() = 0;
 };

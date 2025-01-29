@@ -219,7 +219,7 @@ bool Application::InitApp()
             return false;
         }
 
-        ret = m_ImGuiLayer->Init(m_Window, m_RHI, m_ImGuiRenderPass->GetRHIRenderPass());
+        ret = m_ImGuiLayer->Init(m_AppSpec.Name, m_Window, m_RHI, m_ImGuiRenderPass->GetRHIRenderPass());
         if (!ret)
         {
             APP_LOG_ERROR("ImGuiLayer::Init fail");
