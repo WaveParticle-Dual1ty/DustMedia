@@ -1,3 +1,4 @@
 include(${PROJ_DIR}/CMake/ThirdPartySpdlog.cmake)
 include(${PROJ_DIR}/CMake/ThirdPartyGlfw34.cmake)
 include(${PROJ_DIR}/CMake/ThirdPartyImGui.cmake)
+include(${PROJ_DIR}/CMake/ThirdPartyGLM.cmake)
