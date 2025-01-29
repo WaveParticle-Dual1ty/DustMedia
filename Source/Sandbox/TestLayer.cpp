@@ -33,6 +33,8 @@ void TestLayer::OnDetach()
 
 void TestLayer::OnUpdate(ME::Timestep timestep)
 {
+    static_cast<void>(timestep);
+
     std::array<uint32_t, 2> size = m_CacheViewportSize;
     if (size[0] != m_ViewportSize[0] || size[1] != m_ViewportSize[1])
     {
@@ -75,4 +77,5 @@ void TestLayer::OnUIUpdate()
 
 void TestLayer::OnEvent(ME::Event& event)
 {
+    static_cast<void>(event);
 }

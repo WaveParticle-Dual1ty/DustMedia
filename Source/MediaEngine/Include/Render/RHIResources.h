@@ -141,6 +141,32 @@ struct RHIViewport
     float Height = 0;
     float MinDepth = 0;
     float MaxDepth = 1;
+
+    RHIViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+        : X(static_cast<float>(x))
+        , Y(static_cast<float>(y))
+        , Width(static_cast<float>(width))
+        , Height(static_cast<float>(height))
+    {
+    }
+
+    RHIViewport(float x, float y, float width, float height)
+        : X(x)
+        , Y(y)
+        , Width(width)
+        , Height(height)
+    {
+    }
+
+    RHIViewport(float x, float y, float width, float height, float minDepth, float maxDepth)
+        : X(x)
+        , Y(y)
+        , Width(width)
+        , Height(height)
+        , MinDepth(minDepth)
+        , MaxDepth(maxDepth)
+    {
+    }
 };
 
 struct RHIScissor

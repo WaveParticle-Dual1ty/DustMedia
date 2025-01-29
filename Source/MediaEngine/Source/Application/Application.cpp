@@ -241,7 +241,7 @@ bool Application::InitApp()
 
 Timestep Application::GetTimestep()
 {
-    float time = Time::GetCurrentTimeInSecond();
+    double time = Time::GetCurrentTimeInSecond();
     Timestep timestep = time - m_LastFrameTimeInSec;
     m_LastFrameTimeInSec = time;
     return timestep;

@@ -215,7 +215,7 @@ bool TestRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
 
     RHIRenderPassBeginInfo renderPassBeginInfo;
     renderPassBeginInfo.RenderArea = {0, 0, m_Width, m_Height};
-    renderPassBeginInfo.ColorClearValue = {0.1, 0.2, 0.3, 1};
+    renderPassBeginInfo.ColorClearValue = {0.1f, 0.2f, 0.3f, 1.f};
     renderPassBeginInfo.RenderPass = m_RHIRenderPass;
     renderPassBeginInfo.Framebuffer = m_RHIFrameBuffer;
 
@@ -223,7 +223,7 @@ bool TestRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
 
     m_RHI->CmdBindGraphicPipeline(cmdBuffer, m_Pipeline);
 
-    RHIViewport viewport = {0, 0, m_Width, m_Height};
+    RHIViewport viewport = RHIViewport(0, 0, m_Width, m_Height);
     m_RHI->CmdSetViewport(cmdBuffer, viewport);
 
     RHIScissor scissor = {0, 0, m_Width, m_Height};
