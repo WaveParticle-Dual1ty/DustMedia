@@ -16,6 +16,7 @@ bool ImGuiRenderPass::Initialize(uint32_t w, uint32_t h)
     FRenderPass::Initialize(w, h);
 
     RHIRenderPassCreateDesc desc;
+    desc.PixelFormat = ERHIPixelFormat::PF_R8G8B8A8_UNORM;
     m_RHIRenderPass = m_RHI->CreateRHIRenderPass(desc);
     if (!m_RHIRenderPass)
     {

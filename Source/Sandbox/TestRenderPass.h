@@ -34,6 +34,11 @@ private:
         uint32_t Index3 = 0;
     };
 
+    struct ConstantData
+    {
+        RHIColor Color;
+    };
+
     std::vector<Ref<RHITexture2D>> m_TargetTextures;
     void* m_TargetImTextureID = nullptr;
     std::array<float, 4> m_ClearColor = {0, 0, 0, 1};

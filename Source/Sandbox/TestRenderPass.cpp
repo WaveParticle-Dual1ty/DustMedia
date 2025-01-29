@@ -10,6 +10,7 @@ TestRenderPass::TestRenderPass(Ref<RHI> rhi)
 bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
 {
     RHIRenderPassCreateDesc desc;
+    desc.PixelFormat = ERHIPixelFormat::PF_R8G8B8A8_UNORM;
     m_RHIRenderPass = m_RHI->CreateRHIRenderPass(desc);
     if (!m_RHIRenderPass)
     {
@@ -71,11 +72,19 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
     RHIInputAssemblyInfo inputAssemblyInfo;
     inputAssemblyInfo.PrimitiveTopology = RHIPrimitiveTopology::RHI_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
+    // Constant Range
+    std::vector<RHIConstantRange> constantRanges;
+    RHIConstantRange range;
+    range.ShaderStage = ERHIShaderStage::RHI_SHADER_STAGE_FRAGMENT_BIT;
+    range.Size = sizeof(ConstantData);
+    constantRanges.push_back(range);
+
     RHIGraphicPipelineCreateInfo graphicPipelineCreateInfo;
     graphicPipelineCreateInfo.Shaders = shaders;
     graphicPipelineCreateInfo.VertexInputLayout = vertexInputLayout;
     graphicPipelineCreateInfo.InputAssemblyInfo = inputAssemblyInfo;
     graphicPipelineCreateInfo.RenderPass = m_RHIRenderPass;
+    graphicPipelineCreateInfo.ConstantRanges = constantRanges;
     m_Pipeline = m_RHI->CreateGraphicPipeline(graphicPipelineCreateInfo);
     if (!m_Pipeline)
     {
@@ -231,6 +240,12 @@ bool TestRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
 
     m_RHI->CmdBindVertexBuffer(cmdBuffer, m_VertexBuffer);
     m_RHI->CmdBindIndexBuffer(cmdBuffer, m_IndexBuffer);
+
+    ConstantData constantData;
+    constantData.Color = RHIColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
+    m_RHI->CmdPushConstants(
+        cmdBuffer, m_Pipeline, ERHIShaderStage::RHI_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(constantData), &constantData);
+
     m_RHI->CmdDrawIndexed(cmdBuffer, 6, 1, 0, 0, 0);
 
     m_RHI->CmdEndRenderPass(cmdBuffer);

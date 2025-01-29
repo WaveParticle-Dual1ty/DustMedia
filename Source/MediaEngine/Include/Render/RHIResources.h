@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include "MediaEngine/Include/Core/Ptr.h"
+#include "RHIPixelFormat.h"
 
 namespace ME
 {
@@ -12,6 +13,7 @@ struct RHICommandBuffer
 
 struct RHIRenderPassCreateDesc
 {
+    ERHIPixelFormat PixelFormat = ERHIPixelFormat::PF_Unknown;
 };
 
 struct RHIRenderPass
@@ -120,12 +122,30 @@ struct RHIInputAssemblyInfo
     RHIPrimitiveTopology PrimitiveTopology;
 };
 
+enum class ERHIShaderStage : uint32_t
+{
+    RHI_SHADER_STAGE_VERTEX_BIT,
+    RHI_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
+    RHI_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+    RHI_SHADER_STAGE_GEOMETRY_BIT,
+    RHI_SHADER_STAGE_FRAGMENT_BIT,
+    RHI_SHADER_STAGE_COMPUTE_BIT,
+    RHI_SHADER_STAGE_ALL_GRAPHICS,
+};
+
+struct RHIConstantRange
+{
+    ERHIShaderStage ShaderStage = ERHIShaderStage::RHI_SHADER_STAGE_VERTEX_BIT;
+    uint32_t Size = 0;
+};
+
 struct RHIGraphicPipelineCreateInfo
 {
     std::vector<Ref<RHIShader>> Shaders;
     RHIVertexInputLayout VertexInputLayout;
     RHIInputAssemblyInfo InputAssemblyInfo;
     Ref<RHIRenderPass> RenderPass;
+    std::vector<RHIConstantRange> ConstantRanges;
 };
 
 struct RHIGraphicPipeline

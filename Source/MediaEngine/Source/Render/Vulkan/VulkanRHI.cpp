@@ -454,7 +454,7 @@ Ref<RHIRenderPass> VulkanRHI::CreateRHIRenderPass(RHIRenderPassCreateDesc desc)
 
     VkAttachmentDescription attachmentDesc;
     attachmentDesc.flags = 0;
-    attachmentDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
+    attachmentDesc.format = Util::ConvertERHIPixelFormatToVkFormat(desc.PixelFormat);
     attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
     attachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -708,6 +708,24 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
     pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 
+    std::vector<VkPushConstantRange> constantRanges;
+    if (!createInfo.ConstantRanges.empty())
+    {
+        constantRanges.resize(createInfo.ConstantRanges.size());
+        for (size_t i = 0; i < createInfo.ConstantRanges.size(); ++i)
+        {
+            RHIConstantRange rhiRange = createInfo.ConstantRanges[i];
+            VkPushConstantRange range;
+            range.stageFlags = Util::ConvertERHIShaderStageToVkShaderStageFlagBits(rhiRange.ShaderStage);
+            range.offset = 0;
+            range.size = rhiRange.Size;
+            constantRanges[i] = range;
+        }
+
+        pipelineLayoutCreateInfo.pushConstantRangeCount = static_cast<uint32_t>(constantRanges.size());
+        pipelineLayoutCreateInfo.pPushConstantRanges = constantRanges.data();
+    }
+
     // Layout
     VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     VkResult result = vkCreatePipelineLayout(m_Device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
@@ -751,6 +769,8 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
         RENDER_LOG_ERROR("vkCreateGraphicsPipelines fail");
         return nullptr;
     }
+
+    pipeline->PipelineLayout = pipelineLayout;
 
     return pipeline;
 }
@@ -1011,6 +1031,20 @@ void VulkanRHI::CmdBindIndexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffe
 
     VkDeviceSize indexOffset = 0;
     vkCmdBindIndexBuffer(vulkanCmdBuffer->CommandBuffer, vulkanBuffer->Buffer, indexOffset, VK_INDEX_TYPE_UINT32);
+}
+
+void VulkanRHI::CmdPushConstants(
+    Ref<RHICommandBuffer> cmdBuffer,
+    Ref<RHIGraphicPipeline> pipeline,
+    ERHIShaderStage shaderStage,
+    uint32_t offset,
+    uint32_t size,
+    const void* data)
+{
+    Ref<VulkanRHICommandBuffer> vkCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    Ref<VulkanRHIGraphicPipeline> vkPipeline = std::dynamic_pointer_cast<VulkanRHIGraphicPipeline>(pipeline);
+    VkShaderStageFlags stage = Util::ConvertERHIShaderStageToVkShaderStageFlagBits(shaderStage);
+    vkCmdPushConstants(vkCmdBuffer->CommandBuffer, vkPipeline->PipelineLayout, stage, offset, size, data);
 }
 
 void VulkanRHI::CmdDrawIndexed(

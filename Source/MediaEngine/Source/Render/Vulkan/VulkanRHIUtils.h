@@ -20,6 +20,7 @@ VkShaderStageFlagBits ConvertRHIShaderTypeToVkShaderStageFlagBits(ERHIShaderType
 VkFormat ConvertERHIShaderDataTypeToVkFormat(ERHIShaderDataType type);
 VkPrimitiveTopology ConvertRHIPrimitiveTopologyToVkPrimitiveTopology(RHIPrimitiveTopology type);
 VkBufferUsageFlagBits ConvertERHIBufferUsageToVkBufferUsageFlagBits(ERHIBufferUsage type);
+VkShaderStageFlagBits ConvertERHIShaderStageToVkShaderStageFlagBits(ERHIShaderStage stage);
 
 }  //namespace Util
 

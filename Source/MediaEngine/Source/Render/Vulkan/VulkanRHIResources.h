@@ -22,6 +22,7 @@ struct VulkanRHIShader : RHIShader
 struct VulkanRHIGraphicPipeline : public RHIGraphicPipeline
 {
     VkPipeline Pipeline = VK_NULL_HANDLE;
+    VkPipelineLayout PipelineLayout = VK_NULL_HANDLE;
 };
 
 }  //namespace ME

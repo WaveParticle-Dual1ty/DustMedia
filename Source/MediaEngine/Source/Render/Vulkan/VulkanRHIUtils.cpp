@@ -591,6 +591,30 @@ VkBufferUsageFlagBits ConvertERHIBufferUsageToVkBufferUsageFlagBits(ERHIBufferUs
     }
 }
 
+VkShaderStageFlagBits ConvertERHIShaderStageToVkShaderStageFlagBits(ERHIShaderStage stage)
+{
+    switch (stage)
+    {
+        case ERHIShaderStage::RHI_SHADER_STAGE_VERTEX_BIT:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ERHIShaderStage::RHI_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+            return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+        case ERHIShaderStage::RHI_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+            return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+        case ERHIShaderStage::RHI_SHADER_STAGE_GEOMETRY_BIT:
+            return VK_SHADER_STAGE_GEOMETRY_BIT;
+        case ERHIShaderStage::RHI_SHADER_STAGE_FRAGMENT_BIT:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+        case ERHIShaderStage::RHI_SHADER_STAGE_COMPUTE_BIT:
+            return VK_SHADER_STAGE_COMPUTE_BIT;
+        case ERHIShaderStage::RHI_SHADER_STAGE_ALL_GRAPHICS:
+            return VK_SHADER_STAGE_ALL_GRAPHICS;
+        default:
+            ME_ASSERT(false, "Not supoort ERHIShaderStage type now");
+            return VK_SHADER_STAGE_ALL_GRAPHICS;
+    }
+}
+
 }  //namespace Util
 
 }  //namespace ME

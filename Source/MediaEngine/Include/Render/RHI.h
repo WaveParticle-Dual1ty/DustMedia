@@ -67,6 +67,13 @@ public:
     virtual void CmdSetScissor(Ref<RHICommandBuffer> cmdBuffer, RHIScissor scissor) = 0;
     virtual void CmdBindVertexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) = 0;
     virtual void CmdBindIndexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) = 0;
+    virtual void CmdPushConstants(
+        Ref<RHICommandBuffer> cmdBuffer,
+        Ref<RHIGraphicPipeline> pipeline,
+        ERHIShaderStage shaderStage,
+        uint32_t offset,
+        uint32_t size,
+        const void* data) = 0;
     virtual void CmdDrawIndexed(
         Ref<RHICommandBuffer> cmdBuffer,
         uint32_t indexCount,
