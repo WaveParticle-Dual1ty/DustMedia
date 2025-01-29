@@ -71,7 +71,7 @@ bool VulkanRHI::Initialize(std::shared_ptr<Window> wnd)
     m_GraphicQueue = graphicQueue;
     m_PresentQueue = presentQueue;
     m_ComputeQueue = computeQueue;
-    ME_ASSERT(m_GraphicQueue.QueueFamilyIndex == m_PresentQueue.QueueFamilyIndex);
+    ME_ASSERT(m_GraphicQueue.QueueFamilyIndex == m_PresentQueue.QueueFamilyIndex, "Graphic/Present not same queue");
 
     m_RHICommandBuffer = CreateRef<VulkanRHICommandBuffer>();
     ret = CreateCommandResourcesForGraphic(
@@ -141,6 +141,12 @@ bool VulkanRHI::Resize(uint32_t width, uint32_t height)
     bool ret = CreateSwapchainResources(
         m_Swapchain, m_SwapchainTextures, m_ImageAcquiredSemaphores, m_RenderCompleteSemaphores, m_PhysicalDevice,
         m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, extend, 2);
+    if (!ret)
+    {
+        RENDER_LOG_ERROR("CreateSwapchainResources fail");
+        return false;
+    }
+
     m_GraphicSemaphoreCnt = (uint32_t)m_ImageAcquiredSemaphores.size();
 
     return true;
@@ -444,6 +450,8 @@ Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
 
 Ref<RHIRenderPass> VulkanRHI::CreateRHIRenderPass(RHIRenderPassCreateDesc desc)
 {
+    static_cast<void>(desc);
+
     VkAttachmentDescription attachmentDesc;
     attachmentDesc.flags = 0;
     attachmentDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
@@ -522,7 +530,7 @@ Ref<RHIFramebuffer> VulkanRHI::CreateRHIFramebuffer(
     framebufferCreateInfo.pNext = nullptr;
     framebufferCreateInfo.flags = 0;
     framebufferCreateInfo.renderPass = vulkanRenderPass->RenderPass;
-    framebufferCreateInfo.attachmentCount = imageViews.size();
+    framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(imageViews.size());
     framebufferCreateInfo.pAttachments = imageViews.data();
     framebufferCreateInfo.width = width;
     framebufferCreateInfo.height = height;
@@ -603,7 +611,7 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     pipelineVertexInputStateCreateInfo.flags = 0;
     pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
     pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
-    pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = vertexInputDescs.size();
+    pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputDescs.size());
     pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputDescs.data();
 
     // Assembly
@@ -621,8 +629,8 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     dummyViewport.y = 0;
     dummyViewport.width = 1;
     dummyViewport.height = 1;
-    dummyViewport.minDepth = 0.1;
-    dummyViewport.maxDepth = 1000;
+    dummyViewport.minDepth = 0.1f;
+    dummyViewport.maxDepth = 1000.f;
 
     VkRect2D dummyScissor;
     dummyScissor.offset = {0, 0};
@@ -716,7 +724,7 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     graphicPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     graphicPipelineCreateInfo.pNext = nullptr;
     graphicPipelineCreateInfo.flags = VK_PIPELINE_CREATE_DISABLE_OPTIMIZATION_BIT;
-    graphicPipelineCreateInfo.stageCount = pipelineShaderStages.size();
+    graphicPipelineCreateInfo.stageCount = static_cast<uint32_t>(pipelineShaderStages.size());
     graphicPipelineCreateInfo.pStages = pipelineShaderStages.data();
     graphicPipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
     graphicPipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -1155,7 +1163,7 @@ VkSurfaceKHR VulkanRHI::CreateSurface(VkInstance instance, GLFWwindow* wnd)
 VkPhysicalDevice VulkanRHI::SetupPhysicalDevice(VkInstance instance)
 {
     uint32_t physicalDeviceCnt = 0;
-    VkResult res = vkEnumeratePhysicalDevices(m_Instance, &physicalDeviceCnt, nullptr);
+    VkResult res = vkEnumeratePhysicalDevices(instance, &physicalDeviceCnt, nullptr);
     if (res != VK_SUCCESS || physicalDeviceCnt == 0)
     {
         RENDER_LOG_ERROR("vkEnumeratePhysicalDevices fail");
@@ -1164,7 +1172,7 @@ VkPhysicalDevice VulkanRHI::SetupPhysicalDevice(VkInstance instance)
 
     std::vector<VkPhysicalDevice> physicalDevices;
     physicalDevices.resize(physicalDeviceCnt);
-    vkEnumeratePhysicalDevices(m_Instance, &physicalDeviceCnt, &physicalDevices[0]);
+    vkEnumeratePhysicalDevices(instance, &physicalDeviceCnt, &physicalDevices[0]);
 
     VkPhysicalDevice physicalDevice = physicalDevices[0];
 
@@ -1273,11 +1281,11 @@ VkDevice VulkanRHI::CreateDevice(
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     deviceCreateInfo.pNext = nullptr;
     deviceCreateInfo.flags = 0;
-    deviceCreateInfo.queueCreateInfoCount = deviceQueueCreateInfos.size();
+    deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(deviceQueueCreateInfos.size());
     deviceCreateInfo.pQueueCreateInfos = deviceQueueCreateInfos.data();
     deviceCreateInfo.enabledLayerCount = 0;
     deviceCreateInfo.ppEnabledLayerNames = nullptr;
-    deviceCreateInfo.enabledExtensionCount = enableExtensions.size();
+    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(enableExtensions.size());
     deviceCreateInfo.ppEnabledExtensionNames = enableExtensions.data();
     deviceCreateInfo.pEnabledFeatures = &supportedFeatures;
 
@@ -1531,16 +1539,16 @@ bool VulkanRHI::CreateSwapchainResources(
 
     for (uint32_t i = 0; i < graphicSemaphoreCnt; i++)
     {
-        VkSemaphoreCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        VkResult err = vkCreateSemaphore(m_Device, &info, nullptr, &imageAcquiredSemaphores[i]);
+        VkSemaphoreCreateInfo semaCreateInfo = {};
+        semaCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        VkResult err = vkCreateSemaphore(m_Device, &semaCreateInfo, nullptr, &imageAcquiredSemaphores[i]);
         if (err != VK_SUCCESS)
         {
             RENDER_LOG_ERROR("vkCreateSemaphore fail");
             return false;
         }
 
-        err = vkCreateSemaphore(m_Device, &info, nullptr, &renderCompleteSemaphores[i]);
+        err = vkCreateSemaphore(m_Device, &semaCreateInfo, nullptr, &renderCompleteSemaphores[i]);
         if (err != VK_SUCCESS)
         {
             RENDER_LOG_ERROR("vkCreateSemaphore fail");
@@ -1562,7 +1570,7 @@ VkDescriptorPool VulkanRHI::CreateDescriptorPool(VkDevice device)
     descriptorPoolCreateInfo.pNext = nullptr;
     descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     descriptorPoolCreateInfo.maxSets = 5;
-    descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
+    descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
 
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
@@ -1641,7 +1649,7 @@ VulkanRHI::ShaderSpv VulkanRHI::CreateSPIRVFromFile(const std::string& path, ERH
     std::vector<uint32_t> spirvRes = std::vector<uint32_t>(module.cbegin(), module.cend());
     ShaderSpv res;
     res.Code = spirvRes;
-    res.CodeSize = spirvRes.size() * sizeof(uint32_t);
+    res.CodeSize = static_cast<uint32_t>(spirvRes.size() * sizeof(uint32_t));
     return res;
 }
 

@@ -29,8 +29,8 @@ void DebugLayer::OnUIUpdate()
 {
     ImGui::Begin("DebugLayer");
 
-    float timestepInMS = m_Timestep.GetMilliseconds();
-    float fps = 1000 / timestepInMS;
+    double timestepInMS = m_Timestep.GetMilliseconds();
+    double fps = 1000 / timestepInMS;
     ImGui::Text("Application %.3fms/frame (%.3fFPS)", timestepInMS, fps);
 
     bool inputsOpened = ImGui::TreeNode("Inputs");

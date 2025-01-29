@@ -24,6 +24,7 @@ void VulkanImGuiLayer::OnDetach()
 
 void VulkanImGuiLayer::OnUpdate(Timestep timestep)
 {
+    static_cast<void>(timestep);
 }
 
 void VulkanImGuiLayer::OnUIUpdate()
@@ -35,6 +36,7 @@ void VulkanImGuiLayer::OnUIUpdate()
 
 void VulkanImGuiLayer::OnEvent(Event& event)
 {
+    static_cast<void>(event);
 }
 
 bool VulkanImGuiLayer::Init(Ref<Window> wnd, Ref<RHI> rhi, Ref<RHIRenderPass> rhiRenderPass)

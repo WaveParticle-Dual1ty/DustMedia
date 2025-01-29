@@ -147,6 +147,9 @@ void WindowsVulkanWindow::SetEventCallback()
         m_Window,
         [](GLFWwindow* window, int key, int scancode, int action, int mods)
         {
+            static_cast<void>(scancode);
+            static_cast<void>(mods);
+
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
             switch (action)
@@ -188,6 +191,8 @@ void WindowsVulkanWindow::SetEventCallback()
         m_Window,
         [](GLFWwindow* window, int button, int action, int mods)
         {
+            static_cast<void>(mods);
+
             WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
             switch (action)

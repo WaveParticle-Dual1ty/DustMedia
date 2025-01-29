@@ -16,6 +16,9 @@ bool FRenderPass::Initialize(uint32_t w, uint32_t h)
 
 bool FRenderPass::Resize(uint32_t w, uint32_t h)
 {
+    static_cast<void>(w);
+    static_cast<void>(h);
+
     return true;
 }
 

@@ -293,8 +293,6 @@ bool Application::OnWindowResize(WindowResizeEvent& event)
         m_WndResized = true;
         return false;
     }
-
-    return false;
 }
 
 void Application::UpdateLayers(Timestep timestep)
@@ -307,6 +305,8 @@ void Application::UpdateLayers(Timestep timestep)
 
 void Application::UpdateLayersUI(Timestep timestep)
 {
+    static_cast<void>(timestep);
+
     if (m_EnableUI)
     {
     }

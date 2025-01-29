@@ -17,6 +17,7 @@ void Layer::OnDetach()
 
 void Layer::OnUpdate(Timestep timestep)
 {
+    static_cast<void>(timestep);
 }
 
 void Layer::OnUIUpdate()
@@ -25,6 +26,7 @@ void Layer::OnUIUpdate()
 
 void Layer::OnEvent(Event& event)
 {
+    static_cast<void>(event);
 }
 
 const std::string& Layer::GetName()

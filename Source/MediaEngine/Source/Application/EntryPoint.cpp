@@ -4,6 +4,9 @@
 
 int main(int argc, char** argv)
 {
+    static_cast<void>(argc);
+    static_cast<void>(argv);
+
     APP_LOG_INFO("Start EntryPoint");
 
     auto app = ME::CreateApplication();
