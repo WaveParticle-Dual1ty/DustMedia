@@ -10,6 +10,7 @@ public:
 private:
     VkFormat m_VKFormat = VK_FORMAT_UNDEFINED;
     VkImage m_Image = VK_NULL_HANDLE;
+    VkMemoryRequirements m_MemRequirements = {};
     VkDeviceMemory m_DeviceMem = VK_NULL_HANDLE;
     VkImageView m_ImageView = VK_NULL_HANDLE;
 

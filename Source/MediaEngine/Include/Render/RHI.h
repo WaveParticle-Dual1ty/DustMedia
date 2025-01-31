@@ -7,6 +7,7 @@
 #include "RHITexture.h"
 #include "RHIFramebuffer.h"
 #include "RHIBuffer.h"
+#include "RHIDescriptorSet.h"
 
 namespace ME
 {
@@ -46,7 +47,12 @@ public:
         Ref<RHIRenderPass> renderPass,
         std::vector<Ref<RHITexture2D>>& textures) = 0;
     virtual Ref<RHIShader> CreateRHIShader(RHIShaderCreateInfo createInfo) = 0;
+    virtual Ref<RHIDescriptorSet> CreateRHIDescriptorSet(RHIDescriptorSetCreateInfo createInfo) = 0;
     virtual Ref<RHIGraphicPipeline> CreateGraphicPipeline(RHIGraphicPipelineCreateInfo createInfo) = 0;
+
+    virtual void UpdateDescriptorSets(
+        Ref<RHIDescriptorSet> RelateDescriptorSet,
+        const std::vector<RHIWriteDescriptorSet>& writesDescSets) = 0;
 
     virtual void DestroyRHITexture2D(Ref<RHITexture2D> texture) = 0;
     virtual void DestroyRHIRenderPass(Ref<RHIRenderPass> renderPass) = 0;
@@ -67,6 +73,13 @@ public:
     virtual void CmdSetScissor(Ref<RHICommandBuffer> cmdBuffer, RHIScissor scissor) = 0;
     virtual void CmdBindVertexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) = 0;
     virtual void CmdBindIndexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) = 0;
+    virtual void CmdBindDescriptorSets(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIGraphicPipeline> pipeline) = 0;
+    virtual void CmdBindDescriptorSets(
+        Ref<RHICommandBuffer> cmdBuffer,
+        Ref<RHIGraphicPipeline> pipeline,
+        const std::vector<Ref<RHIDescriptorSet>> descriptorSets) = 0;
+    virtual void
+    CmdCopyBufferToImage(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer, Ref<RHITexture2D> texture) = 0;
     virtual void CmdPushConstants(
         Ref<RHICommandBuffer> cmdBuffer,
         Ref<RHIGraphicPipeline> pipeline,

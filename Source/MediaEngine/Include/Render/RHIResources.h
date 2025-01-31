@@ -3,6 +3,8 @@
 #include <vector>
 #include "MediaEngine/Include/Core/Ptr.h"
 #include "RHIPixelFormat.h"
+#include "RHITexture.h"
+#include "RHIDescriptorSet.h"
 
 namespace ME
 {
@@ -139,6 +141,18 @@ struct RHIConstantRange
     uint32_t Size = 0;
 };
 
+struct RHISetLayoutBinding
+{
+    uint32_t Binding = 0;
+    ERHIDescriptorType DescriptorType = ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_MAX_ENUM;
+    ERHIShaderStage ShaderStage = ERHIShaderStage::RHI_SHADER_STAGE_VERTEX_BIT;
+};
+
+struct RHISetLayoutDesc
+{
+    std::vector<RHISetLayoutBinding> SetLayoutBindings;
+};
+
 struct RHIGraphicPipelineCreateInfo
 {
     std::vector<Ref<RHIShader>> Shaders;
@@ -146,6 +160,8 @@ struct RHIGraphicPipelineCreateInfo
     RHIInputAssemblyInfo InputAssemblyInfo;
     Ref<RHIRenderPass> RenderPass;
     std::vector<RHIConstantRange> ConstantRanges;
+    std::vector<RHISetLayoutDesc> SetLayoutDescs;
+    std::vector<Ref<RHIDescriptorSet>> DescriptorSet;
 };
 
 struct RHIGraphicPipeline

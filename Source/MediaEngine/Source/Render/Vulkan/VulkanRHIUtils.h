@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include "vulkan/vulkan.h"
 #include "shaderc/shaderc.hpp"
+#include "MediaEngine/Include/Render/RHIEnums.h"
 #include "MediaEngine/Include/Render/RHIPixelFormat.h"
 #include "MediaEngine/Include/Render/RHIStruct.h"
 #include "MediaEngine/Include/Render/RHIResources.h"
 #include "MediaEngine/Include/Render/RHIBuffer.h"
+#include "MediaEngine/Include/Render/RHITexture.h"
 
 namespace ME
 {
@@ -21,6 +23,10 @@ VkFormat ConvertERHIShaderDataTypeToVkFormat(ERHIShaderDataType type);
 VkPrimitiveTopology ConvertRHIPrimitiveTopologyToVkPrimitiveTopology(RHIPrimitiveTopology type);
 VkBufferUsageFlagBits ConvertERHIBufferUsageToVkBufferUsageFlagBits(ERHIBufferUsage type);
 VkShaderStageFlagBits ConvertERHIShaderStageToVkShaderStageFlagBits(ERHIShaderStage stage);
+VkDescriptorType ConvertERHIDescriptorTypeToVkDescriptorType(ERHIDescriptorType type);
+VkImageUsageFlags ConvertERHITextureUsageFlagsToVkImageUsageFlags(RHITextureUsageFlags flags);
+VkMemoryPropertyFlags ConvertRHIMemoryPropertyFlagsToVkMemoryPropertyFlags(RHIMemoryPropertyFlags flags);
+VkShaderStageFlags ConvertRHIShaderStageFlagsToVkShaderStageFlags(RHIShaderStageFlags flags);
 
 }  //namespace Util
 

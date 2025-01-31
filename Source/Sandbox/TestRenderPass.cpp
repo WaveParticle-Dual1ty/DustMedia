@@ -1,4 +1,5 @@
 ﻿#include "TestRenderPass.h"
+#include "MediaEngine/Include/Core/Assert.h"
 #include "MediaEngine/Include/Application/Application.h"
 #include "SandboxLog.h"
 
@@ -24,6 +25,8 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
     texCreateDesc.Height = h;
     texCreateDesc.NumMips = 1;
     texCreateDesc.NumSamples = 1;
+    texCreateDesc.Usage = RHI_TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RHI_TEXTURE_USAGE_TRANSFER_SRC_BIT |
+                          RHI_TEXTURE_USAGE_TRANSFER_DST_BIT | RHI_TEXTURE_USAGE_SAMPLED_BIT;
 
     Ref<RHITexture2D> targetTex = m_RHI->CreateRHITexture2D(texCreateDesc);
     if (!targetTex)
@@ -44,6 +47,18 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
 
     m_Width = w;
     m_Height = h;
+
+    // Descriptor Set
+    RHIDescriptorSetCreateInfo descSetCreateInfo = {
+        {0, ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, RHI_SHADER_STAGE_FRAGMENT_BIT}
+    };
+
+    m_DescriptorSet = m_RHI->CreateRHIDescriptorSet(descSetCreateInfo);
+    if (!m_DescriptorSet)
+    {
+        SANDBOX_LOG_ERROR("RHI::CreateRHIDescriptorSet fail");
+        return false;
+    }
 
     // Graphic pipeline
     const std::string resPath = ME::Application::Get().GetResourcePath();
@@ -79,12 +94,28 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
     range.Size = sizeof(ConstantData);
     constantRanges.push_back(range);
 
+    // SetLayout
+    std::vector<RHISetLayoutDesc> setLayoutDescs;
+    setLayoutDescs.resize(1);
+    std::vector<RHISetLayoutBinding> setLayoutBindings;
+    setLayoutBindings.resize(1);
+    setLayoutBindings[0].Binding = 0;
+    setLayoutBindings[0].DescriptorType = ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    setLayoutBindings[0].ShaderStage = ERHIShaderStage::RHI_SHADER_STAGE_FRAGMENT_BIT;
+    setLayoutDescs[0].SetLayoutBindings = setLayoutBindings;
+
     RHIGraphicPipelineCreateInfo graphicPipelineCreateInfo;
     graphicPipelineCreateInfo.Shaders = shaders;
     graphicPipelineCreateInfo.VertexInputLayout = vertexInputLayout;
     graphicPipelineCreateInfo.InputAssemblyInfo = inputAssemblyInfo;
     graphicPipelineCreateInfo.RenderPass = m_RHIRenderPass;
     graphicPipelineCreateInfo.ConstantRanges = constantRanges;
+    graphicPipelineCreateInfo.SetLayoutDescs = setLayoutDescs;
+
+    // Descriptor Set
+    m_DescriptorSets = {m_DescriptorSet};
+    graphicPipelineCreateInfo.DescriptorSet = m_DescriptorSets;
+
     m_Pipeline = m_RHI->CreateGraphicPipeline(graphicPipelineCreateInfo);
     if (!m_Pipeline)
     {
@@ -94,9 +125,9 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
 
     // Vertex/Index Buffer
     Vertex vertexDatas[4] = {
-        { {-0.5, 0.5, 0, 1}, {1, 0, 0, 1}, {0, 0}},
-        {{0.25, 0.25, 0, 1}, {1, 0, 0, 1}, {0, 0}},
-        { {0.5, -0.5, 0, 1}, {1, 0, 0, 1}, {0, 0}},
+        { {-0.5, 0.5, 0, 1}, {1, 0, 0, 1}, {0, 1}},
+        {  {0.5, 0.5, 0, 1}, {1, 0, 0, 1}, {1, 1}},
+        { {0.5, -0.5, 0, 1}, {1, 0, 0, 1}, {1, 0}},
         {{-0.5, -0.5, 0, 1}, {1, 0, 0, 1}, {0, 0}},
     };
 
@@ -126,6 +157,51 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
         return false;
     }
 
+    // create image texture
+    std::string imagePath = resPath + "/Images/awesomeface.png";
+
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    unsigned char* data = stbi_load(imagePath.c_str(), &width, &height, &channels, 0);
+    ME_ASSERT(data != nullptr, "stbi_load fail");
+
+    RHITexture2DCreateDesc imageTexCreateDesc;
+    imageTexCreateDesc.PixelFormat = ERHIPixelFormat::PF_R8G8B8A8_UNORM;
+    imageTexCreateDesc.Width = width;
+    imageTexCreateDesc.Height = height;
+    imageTexCreateDesc.NumMips = 1;
+    imageTexCreateDesc.NumSamples = 1;
+    imageTexCreateDesc.Usage = RHI_TEXTURE_USAGE_TRANSFER_DST_BIT | RHI_TEXTURE_USAGE_SAMPLED_BIT;
+    imageTexCreateDesc.MemoryProperty = 0;
+    m_Texture = m_RHI->CreateRHITexture2D(imageTexCreateDesc);
+    if (!m_Texture)
+    {
+        SANDBOX_LOG_ERROR("RHI::CreateRHITexture2D fail");
+        return false;
+    }
+
+    RHIBufferCreateDesc imageBufferDesc;
+    imageBufferDesc.BufferUsage = ERHIBufferUsage::RHI_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    imageBufferDesc.BufferSize = width * height * channels;
+    imageBufferDesc.Data = data;
+    m_ImageBuffer = m_RHI->CreateRHIBuffer(imageBufferDesc);
+    if (!m_ImageBuffer)
+    {
+        SANDBOX_LOG_ERROR("RHI::CreateRHIBuffer fail");
+        return false;
+    }
+
+    stbi_image_free(data);
+    data = nullptr;
+
+    // Update DescriptorSets
+    std::vector<RHIWriteDescriptorSet> writeDescSets = {
+        {ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, 0, m_Texture}
+    };
+
+    m_RHI->UpdateDescriptorSets(m_DescriptorSet, writeDescSets);
+
     return true;
 }
 
@@ -148,6 +224,8 @@ bool TestRenderPass::Resize(uint32_t w, uint32_t h)
     texCreateDesc.Height = h;
     texCreateDesc.NumMips = 1;
     texCreateDesc.NumSamples = 1;
+    texCreateDesc.Usage = RHI_TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RHI_TEXTURE_USAGE_TRANSFER_SRC_BIT |
+                          RHI_TEXTURE_USAGE_TRANSFER_DST_BIT | RHI_TEXTURE_USAGE_SAMPLED_BIT;
 
     Ref<RHITexture2D> targetTex = m_RHI->CreateRHITexture2D(texCreateDesc);
     if (!targetTex)
@@ -222,6 +300,22 @@ bool TestRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
                        ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                        ERHIImageAspectFlag::RHI_IMAGE_ASPECT_COLOR_BIT));
 
+    if (!m_UploadTexture)
+    {
+        m_RHI->CmdCopyBufferToImage(cmdBuffer, m_ImageBuffer, m_Texture);
+
+        m_RHI->CmdPipelineBarrier(
+            cmdBuffer, RHIPipelineBarrierInfo(
+                           m_Texture, ERHIAccessFlag::RHI_ACCESS_NONE, ERHIAccessFlag::RHI_ACCESS_SHADER_READ_BIT,
+                           ERHIImageLayout::RHI_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                           ERHIImageLayout::RHI_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                           ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_TRANSFER_BIT,
+                           ERHIPipelineStageFlag::RHI_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                           ERHIImageAspectFlag::RHI_IMAGE_ASPECT_COLOR_BIT));
+
+        m_UploadTexture = true;
+    }
+
     RHIRenderPassBeginInfo renderPassBeginInfo;
     renderPassBeginInfo.RenderArea = {0, 0, m_Width, m_Height};
     renderPassBeginInfo.ColorClearValue = {0.1f, 0.2f, 0.3f, 1.f};
@@ -245,6 +339,9 @@ bool TestRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
     constantData.Color = RHIColor(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]);
     m_RHI->CmdPushConstants(
         cmdBuffer, m_Pipeline, ERHIShaderStage::RHI_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(constantData), &constantData);
+
+    //m_RHI->CmdBindDescriptorSets(cmdBuffer, m_Pipeline);
+    m_RHI->CmdBindDescriptorSets(cmdBuffer, m_Pipeline, m_DescriptorSets);
 
     m_RHI->CmdDrawIndexed(cmdBuffer, 6, 1, 0, 0, 0);
 

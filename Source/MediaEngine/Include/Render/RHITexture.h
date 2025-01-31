@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <cstdint>
+#include "RHIEnums.h"
 #include "RHIPixelFormat.h"
 
 namespace ME
@@ -17,6 +18,8 @@ struct RHITexture2DCreateDesc
     uint32_t Height = 0;
     uint32_t NumMips = 0;
     uint32_t NumSamples = 0;
+    RHITextureUsageFlags Usage = 0;
+    RHIMemoryPropertyFlags MemoryProperty = 0;
 };
 
 class RHITexture2D : public RHITexture

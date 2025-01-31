@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <array>
+#include "ThirdParty/stb/stb_image.h"
 #include "MediaEngine/Include/Render/RHIBuffer.h"
+#include "MediaEngine/Include/Render/RHIDescriptorSet.h"
 #include "MediaEngine/Include/Render/RenderPass.h"
 
 using namespace ME;
@@ -45,8 +47,15 @@ private:
 
     Ref<RHIShader> m_VertexShader;
     Ref<RHIShader> m_PixelShader;
+    Ref<RHIDescriptorSet> m_DescriptorSet;
+    std::vector<Ref<RHIDescriptorSet>> m_DescriptorSets;
+
     Ref<RHIGraphicPipeline> m_Pipeline;
 
     Ref<RHIBuffer> m_VertexBuffer;
     Ref<RHIBuffer> m_IndexBuffer;
+    Ref<RHITexture2D> m_Texture;
+    Ref<RHIBuffer> m_ImageBuffer;
+
+    bool m_UploadTexture = false;
 };

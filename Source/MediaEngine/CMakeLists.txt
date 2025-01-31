@@ -11,6 +11,7 @@ target_link_libraries(${TARGET_NAME} PRIVATE
     Third_spdlog
     Third_glfw
     Third_imgui
+    Third_stb
 )
 
 target_include_directories(${TARGET_NAME} PRIVATE

@@ -46,7 +46,12 @@ public:
         Ref<RHIRenderPass> renderPass,
         std::vector<Ref<RHITexture2D>>& textures) override;
     virtual Ref<RHIShader> CreateRHIShader(RHIShaderCreateInfo createInfo) override;
+    virtual Ref<RHIDescriptorSet> CreateRHIDescriptorSet(RHIDescriptorSetCreateInfo createInfo) override;
     virtual Ref<RHIGraphicPipeline> CreateGraphicPipeline(RHIGraphicPipelineCreateInfo createInfo) override;
+
+    virtual void UpdateDescriptorSets(
+        Ref<RHIDescriptorSet> RelateDescriptorSet,
+        const std::vector<RHIWriteDescriptorSet>& writesDescSets) override;
 
     virtual void DestroyRHITexture2D(Ref<RHITexture2D> texture) override;
     virtual void DestroyRHIRenderPass(Ref<RHIRenderPass> renderPass) override;
@@ -67,6 +72,13 @@ public:
     virtual void CmdSetScissor(Ref<RHICommandBuffer> cmdBuffer, RHIScissor scissor) override;
     virtual void CmdBindVertexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) override;
     virtual void CmdBindIndexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer) override;
+    virtual void CmdBindDescriptorSets(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIGraphicPipeline> pipeline) override;
+    virtual void CmdBindDescriptorSets(
+        Ref<RHICommandBuffer> cmdBuffer,
+        Ref<RHIGraphicPipeline> pipeline,
+        const std::vector<Ref<RHIDescriptorSet>> descriptorSets) override;
+    virtual void CmdCopyBufferToImage(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer, Ref<RHITexture2D> texture)
+        override;
     virtual void CmdPushConstants(
         Ref<RHICommandBuffer> cmdBuffer,
         Ref<RHIGraphicPipeline> pipeline,

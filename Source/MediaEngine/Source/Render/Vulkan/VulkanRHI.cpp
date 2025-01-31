@@ -10,6 +10,7 @@
 #include "VulkanRHIUtils.h"
 #include "VulkanRHIFramebuffer.h"
 #include "VulkanRHIBuffer.h"
+#include "VulkanRHIDescriptorSet.h"
 
 namespace ME
 {
@@ -371,9 +372,7 @@ Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
     imageCreateInfo.arrayLayers = 1;
     imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    //imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageCreateInfo.usage = Util::ConvertERHITextureUsageFlagsToVkImageUsageFlags(desc.Usage);
     imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageCreateInfo.queueFamilyIndexCount = 0;
     imageCreateInfo.pQueueFamilyIndices = nullptr;
@@ -389,6 +388,7 @@ Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
     // bind image memeory
     VkMemoryRequirements memRequirement;
     vkGetImageMemoryRequirements(m_Device, texture->m_Image, &memRequirement);
+    texture->m_MemRequirements = memRequirement;
 
     VkMemoryAllocateInfo memAlloInfo;
     memAlloInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -570,6 +570,55 @@ Ref<RHIShader> VulkanRHI::CreateRHIShader(RHIShaderCreateInfo createInfo)
     return rhiShader;
 }
 
+Ref<RHIDescriptorSet> VulkanRHI::CreateRHIDescriptorSet(RHIDescriptorSetCreateInfo createInfo)
+{
+    std::vector<VkDescriptorSetLayoutBinding> bindings;
+    bindings.resize(createInfo.BindingDescs.size());
+    for (int i = 0; i < createInfo.BindingDescs.size(); ++i)
+    {
+        RHIDescriptorSetBindingDesc rhiBinding = createInfo.BindingDescs[i];
+        VkDescriptorSetLayoutBinding binding = {};
+        binding.binding = rhiBinding.Binding;
+        binding.descriptorType = Util::ConvertERHIDescriptorTypeToVkDescriptorType(rhiBinding.DescriptorType);
+        binding.descriptorCount = rhiBinding.DescriptorCount;
+        binding.stageFlags = Util::ConvertRHIShaderStageFlagsToVkShaderStageFlags(rhiBinding.ShaderStage);
+        binding.pImmutableSamplers = nullptr;
+        bindings[i] = binding;
+    }
+
+    Ref<VulkanRHIDescriptorSet> rhiDescSet = CreateRef<VulkanRHIDescriptorSet>();
+    rhiDescSet->DescriptorSetLayoutBindings = bindings;
+
+    VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo;
+    descSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descSetLayoutCreateInfo.pNext = nullptr;
+    descSetLayoutCreateInfo.flags = 0;
+    descSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+    descSetLayoutCreateInfo.pBindings = bindings.data();
+    VkResult err =
+        vkCreateDescriptorSetLayout(m_Device, &descSetLayoutCreateInfo, nullptr, &rhiDescSet->DescriptorSetLayout);
+    if (err != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateDescriptorSetLayout fail");
+        return nullptr;
+    }
+
+    VkDescriptorSetAllocateInfo allocInfo;
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.pNext = nullptr;
+    allocInfo.descriptorPool = m_DescriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &rhiDescSet->DescriptorSetLayout;
+    VkResult res = vkAllocateDescriptorSets(m_Device, &allocInfo, &rhiDescSet->DescriptorSet);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkAllocateDescriptorSets fail");
+        return nullptr;
+    }
+
+    return rhiDescSet;
+}
+
 Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreateInfo createInfo)
 {
     // shader
@@ -708,6 +757,23 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
     pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 
+    // Set Layouts
+    std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+    if (!createInfo.DescriptorSet.empty())
+    {
+        descriptorSetLayouts.resize(createInfo.DescriptorSet.size());
+        for (size_t i = 0; i < createInfo.DescriptorSet.size(); ++i)
+        {
+            Ref<VulkanRHIDescriptorSet> rhiDescSet =
+                std::dynamic_pointer_cast<VulkanRHIDescriptorSet>(createInfo.DescriptorSet[i]);
+            descriptorSetLayouts[i] = rhiDescSet->DescriptorSetLayout;
+        }
+
+        pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+        pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
+    }
+
+    // Constant Ranges
     std::vector<VkPushConstantRange> constantRanges;
     if (!createInfo.ConstantRanges.empty())
     {
@@ -773,6 +839,50 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     pipeline->PipelineLayout = pipelineLayout;
 
     return pipeline;
+}
+
+void VulkanRHI::UpdateDescriptorSets(
+    Ref<RHIDescriptorSet> RelateDescriptorSet,
+    const std::vector<RHIWriteDescriptorSet>& writesDescSets)
+{
+    Ref<VulkanRHIDescriptorSet> descriptorSet = std::dynamic_pointer_cast<VulkanRHIDescriptorSet>(RelateDescriptorSet);
+    VkDescriptorSet dstSet = descriptorSet->DescriptorSet;
+
+    std::vector<VkWriteDescriptorSet> writeDescSets;
+    writeDescSets.resize(writesDescSets.size());
+    for (size_t i = 0; i < writesDescSets.size(); ++i)
+    {
+        RHIWriteDescriptorSet rhiSet = writesDescSets[i];
+        if (rhiSet.DescriptorType == ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+        {
+            Ref<VulkanRHITexture2D> texture = std::dynamic_pointer_cast<VulkanRHITexture2D>(rhiSet.Texture);
+
+            VkDescriptorImageInfo descImageInfo = {};
+            descImageInfo.sampler = m_Sampler;
+            descImageInfo.imageView = texture->m_ImageView;
+            descImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            VkWriteDescriptorSet writeDescSet = {};
+            writeDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescSet.pNext = nullptr;
+            writeDescSet.dstSet = dstSet;
+            writeDescSet.dstBinding = rhiSet.DstBinding;
+            writeDescSet.dstArrayElement = rhiSet.DstArrayElement;
+            writeDescSet.descriptorCount = 1;
+            writeDescSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writeDescSet.pImageInfo = &descImageInfo;
+            writeDescSet.pBufferInfo = nullptr;
+            writeDescSet.pTexelBufferView = nullptr;
+
+            writeDescSets[i] = writeDescSet;
+        }
+        else
+        {
+            ME_ASSERT(false, "Not support update ERHIDescriptorType now");
+        }
+    }
+
+    vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(writeDescSets.size()), writeDescSets.data(), 0, nullptr);
 }
 
 void VulkanRHI::DestroyRHITexture2D(Ref<RHITexture2D> texture)
@@ -1031,6 +1141,62 @@ void VulkanRHI::CmdBindIndexBuffer(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffe
 
     VkDeviceSize indexOffset = 0;
     vkCmdBindIndexBuffer(vulkanCmdBuffer->CommandBuffer, vulkanBuffer->Buffer, indexOffset, VK_INDEX_TYPE_UINT32);
+}
+
+void VulkanRHI::CmdBindDescriptorSets(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIGraphicPipeline> pipeline)
+{
+    Ref<VulkanRHICommandBuffer> vkCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    Ref<VulkanRHIGraphicPipeline> vkPipeline = std::dynamic_pointer_cast<VulkanRHIGraphicPipeline>(pipeline);
+
+    VkPipelineLayout pipelineLayout = vkPipeline->PipelineLayout;
+    std::vector<VkDescriptorSet> descriptorSets = vkPipeline->DescriptorSet;
+    vkCmdBindDescriptorSets(
+        vkCmdBuffer->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0,
+        static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
+}
+
+void VulkanRHI::CmdBindDescriptorSets(
+    Ref<RHICommandBuffer> cmdBuffer,
+    Ref<RHIGraphicPipeline> pipeline,
+    const std::vector<Ref<RHIDescriptorSet>> descriptorSets)
+{
+    Ref<VulkanRHICommandBuffer> vkCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    Ref<VulkanRHIGraphicPipeline> vkPipeline = std::dynamic_pointer_cast<VulkanRHIGraphicPipeline>(pipeline);
+
+    std::vector<VkDescriptorSet> vkDescriptorSets;
+    vkDescriptorSets.resize(descriptorSets.size());
+    for (size_t i = 0; i < descriptorSets.size(); ++i)
+    {
+        Ref<VulkanRHIDescriptorSet> rhiDescriptorSet =
+            std::dynamic_pointer_cast<VulkanRHIDescriptorSet>(descriptorSets[i]);
+        vkDescriptorSets[i] = rhiDescriptorSet->DescriptorSet;
+    }
+
+    vkCmdBindDescriptorSets(
+        vkCmdBuffer->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeline->PipelineLayout, 0,
+        static_cast<uint32_t>(vkDescriptorSets.size()), vkDescriptorSets.data(), 0, nullptr);
+}
+
+void VulkanRHI::CmdCopyBufferToImage(Ref<RHICommandBuffer> cmdBuffer, Ref<RHIBuffer> buffer, Ref<RHITexture2D> texture)
+{
+    Ref<VulkanRHICommandBuffer> vkCmdBuffer = std::dynamic_pointer_cast<VulkanRHICommandBuffer>(cmdBuffer);
+    Ref<VulkanRHIBuffer> vkBuffer = std::dynamic_pointer_cast<VulkanRHIBuffer>(buffer);
+    Ref<VulkanRHITexture2D> vkTexture = std::dynamic_pointer_cast<VulkanRHITexture2D>(texture);
+
+    VkBufferImageCopy bufferImageCopy = {};
+    bufferImageCopy.bufferOffset = 0;
+    bufferImageCopy.bufferRowLength = 0;
+    bufferImageCopy.bufferImageHeight = 0;
+    bufferImageCopy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    bufferImageCopy.imageSubresource.mipLevel = 0;
+    bufferImageCopy.imageSubresource.baseArrayLayer = 0;
+    bufferImageCopy.imageSubresource.layerCount = 1;
+    bufferImageCopy.imageOffset = {0, 0, 0};
+    bufferImageCopy.imageExtent = {vkTexture->m_Width, vkTexture->m_Height, 1};
+
+    vkCmdCopyBufferToImage(
+        vkCmdBuffer->CommandBuffer, vkBuffer->Buffer, vkTexture->m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+        &bufferImageCopy);
 }
 
 void VulkanRHI::CmdPushConstants(
@@ -1603,7 +1769,7 @@ VkDescriptorPool VulkanRHI::CreateDescriptorPool(VkDevice device)
     descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptorPoolCreateInfo.pNext = nullptr;
     descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    descriptorPoolCreateInfo.maxSets = 5;
+    descriptorPoolCreateInfo.maxSets = 10;
     descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
 

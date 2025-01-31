@@ -30,6 +30,8 @@ bool ImGuiRenderPass::Initialize(uint32_t w, uint32_t h)
     texCreateDesc.Height = h;
     texCreateDesc.NumMips = 1;
     texCreateDesc.NumSamples = 1;
+    texCreateDesc.Usage = RHI_TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RHI_TEXTURE_USAGE_TRANSFER_SRC_BIT |
+                          RHI_TEXTURE_USAGE_TRANSFER_DST_BIT | RHI_TEXTURE_USAGE_SAMPLED_BIT;
 
     Ref<RHITexture2D> targetTex = m_RHI->CreateRHITexture2D(texCreateDesc);
     if (!targetTex)
@@ -65,6 +67,8 @@ bool ImGuiRenderPass::Resize(uint32_t w, uint32_t h)
     texCreateDesc.Height = h;
     texCreateDesc.NumMips = 1;
     texCreateDesc.NumSamples = 1;
+    texCreateDesc.Usage = RHI_TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RHI_TEXTURE_USAGE_TRANSFER_SRC_BIT |
+                          RHI_TEXTURE_USAGE_TRANSFER_DST_BIT | RHI_TEXTURE_USAGE_SAMPLED_BIT;
 
     Ref<RHITexture2D> targetTex = m_RHI->CreateRHITexture2D(texCreateDesc);
     if (!targetTex)
