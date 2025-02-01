@@ -1,5 +1,8 @@
 ﻿#pragma once
+#include "MediaEngine/Include/Core/Ptr.h"
 #include "MediaEngine/Include/Application/Layer.h"
+#include "MediaEngine/Include/Event/ApplicationEvent.h"
+#include "MediaEngine/Include/Media/ImageLoader.h"
 
 class EditorLayer : public ME::Layer
 {
@@ -16,4 +19,9 @@ public:
 private:
     void BeginDockspace();
     void EndDockspace();
+
+    bool OnFileDrop(ME::FileDropEvent& event);
+
+private:
+    ME::Ref<ME::ImageLoader> m_CurrentImage;
 };

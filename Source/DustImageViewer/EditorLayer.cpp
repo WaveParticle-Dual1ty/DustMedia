@@ -3,9 +3,7 @@
 #include "ThirdParty/imgui/imgui.h"
 #include "MediaEngine/Include/Core/Assert.h"
 #include "MediaEngine/Include/Application/Application.h"
-#include "MediaEngine/Include/Event/MouseEvent.h"
-#include "MediaEngine/Include/Event/Input.h"
-#include "MediaEngine/Include/Event/EventUtils.h"
+#include "DustImageViewerLog.h"
 
 EditorLayer::EditorLayer()
     : Layer("EditorLayer")
@@ -32,6 +30,20 @@ void EditorLayer::OnUIUpdate()
     // Information
     ImGui::Begin("Information");
 
+    if (m_CurrentImage != nullptr)
+    {
+        if (ImGui::CollapsingHeader("File", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::Text("File path: %s", m_CurrentImage->GetFilePath().c_str());
+        }
+
+        if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::Text("Width:  \t%d", m_CurrentImage->GetWidth());
+            ImGui::Text("Height: \t%d", m_CurrentImage->GetHeight());
+        }
+    }
+
     ImGui::End();
 
     // Viewport
@@ -39,12 +51,22 @@ void EditorLayer::OnUIUpdate()
 
     ImGui::End();
 
+    // ImGui Demo
+    bool showDemoWnd = true;
+    if (showDemoWnd)
+        ImGui::ShowDemoWindow(&showDemoWnd);
+
     EndDockspace();
 }
 
 void EditorLayer::OnEvent(ME::Event& event)
 {
-    static_cast<void>(event);
+    ME::EventDispatcher dispatcher(event);
+    dispatcher.Dispatch<ME::FileDropEvent>(
+        [this](ME::FileDropEvent& event) -> bool
+        {
+            return OnFileDrop(event);
+        });
 }
 
 void EditorLayer::BeginDockspace()
@@ -108,4 +130,19 @@ void EditorLayer::BeginDockspace()
 void EditorLayer::EndDockspace()
 {
     ImGui::End();
+}
+
+bool EditorLayer::OnFileDrop(ME::FileDropEvent& event)
+{
+    std::string imagePath = event.GetDropFiles()[0];
+    m_CurrentImage = ME::CreateRef<ME::ImageLoader>();
+    bool ret = m_CurrentImage->Load(imagePath);
+    if (!ret)
+    {
+        IMAGEVIWER_LOG_WARN("Fail to load image: {}", imagePath);
+        m_CurrentImage = nullptr;
+        return false;
+    }
+
+    return false;
 }
