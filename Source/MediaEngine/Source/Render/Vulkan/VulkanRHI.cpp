@@ -405,13 +405,6 @@ Ref<RHITexture2D> VulkanRHI::CreateRHITexture2D(RHITexture2DCreateDesc desc)
     componentMapping.b = VK_COMPONENT_SWIZZLE_B;
     componentMapping.a = VK_COMPONENT_SWIZZLE_A;
 
-    VkImageSubresourceRange imageSubresourceRange;
-    imageSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageSubresourceRange.baseMipLevel = 0;
-    imageSubresourceRange.levelCount = 1;
-    imageSubresourceRange.baseArrayLayer = 0;
-    imageSubresourceRange.layerCount = 1;
-
     VkImageViewCreateInfo imageViewCreateInfo;
     imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     imageViewCreateInfo.pNext = nullptr;
