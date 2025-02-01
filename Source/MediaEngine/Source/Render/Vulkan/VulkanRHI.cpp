@@ -278,7 +278,7 @@ Ref<RHIBuffer> VulkanRHI::CreateRHIBuffer(RHIBufferCreateDesc createDesc)
     bufferCreateInfo.pNext = nullptr;
     bufferCreateInfo.flags = 0;
     bufferCreateInfo.size = createDesc.BufferSize;
-    bufferCreateInfo.usage = Util::ConvertERHIBufferUsageToVkBufferUsageFlagBits(createDesc.BufferUsage);
+    bufferCreateInfo.usage = Util::ConvertRHIBufferUsageFlagsToVkBufferUsageFlags(createDesc.Usage);
     bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bufferCreateInfo.queueFamilyIndexCount = 0;
     bufferCreateInfo.pQueueFamilyIndices = nullptr;
