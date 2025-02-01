@@ -133,6 +133,7 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
 
     RHIBufferCreateDesc bufferDesc;
     bufferDesc.Usage = RHI_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bufferDesc.MemoryProperty = RHI_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
     bufferDesc.BufferSize = sizeof(vertexDatas);
     bufferDesc.Data = vertexDatas;
     m_VertexBuffer = m_RHI->CreateRHIBuffer(bufferDesc);
@@ -148,6 +149,7 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
     };
 
     bufferDesc.Usage = RHI_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    bufferDesc.MemoryProperty = RHI_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
     bufferDesc.BufferSize = sizeof(indexData);
     bufferDesc.Data = indexData;
     m_IndexBuffer = m_RHI->CreateRHIBuffer(bufferDesc);
@@ -183,6 +185,7 @@ bool TestRenderPass::Initialize(uint32_t w, uint32_t h)
 
     RHIBufferCreateDesc imageBufferDesc;
     imageBufferDesc.Usage = RHI_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    imageBufferDesc.MemoryProperty = RHI_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
     imageBufferDesc.BufferSize = width * height * channels;
     imageBufferDesc.Data = data;
     m_ImageBuffer = m_RHI->CreateRHIBuffer(imageBufferDesc);

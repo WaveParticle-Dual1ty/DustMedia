@@ -300,7 +300,8 @@ Ref<RHIBuffer> VulkanRHI::CreateRHIBuffer(RHIBufferCreateDesc createDesc)
     memAlloInfo.allocationSize = memRequirement.size;
     //memAlloInfo.memoryTypeIndex = FindMemoryIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memRequirement.size);
     // Find a memory type index that fits the properties of the buffer
-    VkMemoryPropertyFlags memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    VkMemoryPropertyFlags memoryPropertyFlags =
+        Util::ConvertRHIMemoryPropertyFlagsToVkMemoryPropertyFlags(createDesc.MemoryProperty);
     bool memTypeFound = false;
     for (uint32_t i = 0; i < m_MemoryProperties.memoryTypeCount; i++)
     {
