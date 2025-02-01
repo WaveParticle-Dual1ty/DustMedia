@@ -29,6 +29,16 @@ void EditorLayer::OnUIUpdate()
 {
     BeginDockspace();
 
+    // Information
+    ImGui::Begin("Information");
+
+    ImGui::End();
+
+    // Viewport
+    ImGui::Begin("Viewport");
+
+    ImGui::End();
+
     EndDockspace();
 }
 
