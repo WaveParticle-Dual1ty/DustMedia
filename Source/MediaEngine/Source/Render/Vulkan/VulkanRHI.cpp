@@ -298,29 +298,16 @@ Ref<RHIBuffer> VulkanRHI::CreateRHIBuffer(RHIBufferCreateDesc createDesc)
     memAlloInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memAlloInfo.pNext = nullptr;
     memAlloInfo.allocationSize = memRequirement.size;
-    //memAlloInfo.memoryTypeIndex = FindMemoryIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memRequirement.size);
-    // Find a memory type index that fits the properties of the buffer
-    VkMemoryPropertyFlags memoryPropertyFlags =
-        Util::ConvertRHIMemoryPropertyFlagsToVkMemoryPropertyFlags(createDesc.MemoryProperty);
-    bool memTypeFound = false;
-    for (uint32_t i = 0; i < m_MemoryProperties.memoryTypeCount; i++)
-    {
-        if ((memRequirement.memoryTypeBits & 1) == 1)
-        {
-            if ((m_MemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
-            {
-                memAlloInfo.memoryTypeIndex = i;
-                memTypeFound = true;
-            }
-        }
-        memRequirement.memoryTypeBits >>= 1;
-    }
 
-    if (!memTypeFound)
+    VkMemoryPropertyFlags memoryProperty =
+        Util::ConvertRHIMemoryPropertyFlagsToVkMemoryPropertyFlags(createDesc.MemoryProperty);
+    uint32_t index = FindMemoryIndex(memoryProperty, memRequirement.size);
+    if (index == VK_MAX_MEMORY_TYPES)
     {
-        RENDER_LOG_ERROR("memTypeFound is nullptr");
+        RENDER_LOG_ERROR("FindMemoryIndex fail");
         return nullptr;
     }
+    memAlloInfo.memoryTypeIndex = index;
 
     res = vkAllocateMemory(m_Device, &memAlloInfo, nullptr, &rhiBuffer->BufferMem);
     if (res != VK_SUCCESS)
