@@ -29,7 +29,7 @@ void VulkanImGuiLayer::OnUpdate(Timestep timestep)
 
 void VulkanImGuiLayer::OnUIUpdate()
 {
-    bool showDemoWindow = true;
+    bool showDemoWindow = false;
     if (showDemoWindow)
         ImGui::ShowDemoWindow(&showDemoWindow);
 }
