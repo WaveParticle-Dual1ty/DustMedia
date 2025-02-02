@@ -1848,25 +1848,19 @@ VulkanRHI::ShaderSpv VulkanRHI::CreateSPIRVFromFile(const std::string& path, ERH
 
 uint32_t VulkanRHI::FindMemoryIndex(VkMemoryPropertyFlags requiredFlags, VkDeviceSize size)
 {
-    uint32_t memTypeIndex = VK_MAX_MEMORY_TYPES;
     for (uint32_t i = 0; i < m_MemoryProperties.memoryTypeCount; ++i)
     {
         if ((m_MemoryProperties.memoryTypes[i].propertyFlags & requiredFlags) == requiredFlags)
         {
-            bool isHeapIndexValid = false;
             for (uint32_t j = 0; j < m_MemoryProperties.memoryHeapCount; ++j)
             {
                 if (m_MemoryProperties.memoryTypes[i].heapIndex == j && size <= m_MemoryProperties.memoryHeaps[j].size)
-                {
-                    isHeapIndexValid = true;
-                    memTypeIndex = i;
-                    break;
-                }
+                    return i;
             }
         }
     }
 
-    return memTypeIndex;
+    return VK_MAX_MEMORY_TYPES;
 }
 
 }  //namespace ME
