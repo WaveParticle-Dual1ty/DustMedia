@@ -706,13 +706,15 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     // Color Blend
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.blendEnable = VK_FALSE;
+    colorBlendAttachment.colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
     VkPipelineColorBlendStateCreateInfo colorBlend;
     colorBlend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     colorBlend.pNext = nullptr;
     colorBlend.flags = 0;
     colorBlend.logicOpEnable = VK_FALSE;
-    colorBlend.logicOp = VK_LOGIC_OP_CLEAR;
+    colorBlend.logicOp = VK_LOGIC_OP_COPY;
     colorBlend.attachmentCount = 1;
     colorBlend.pAttachments = &colorBlendAttachment;
     colorBlend.blendConstants[0] = 0;
@@ -799,8 +801,7 @@ Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreat
     graphicPipelineCreateInfo.pMultisampleState = nullptr;
     //graphicPipelineCreateInfo.pMultisampleState = &multisampleState;
     graphicPipelineCreateInfo.pDepthStencilState = nullptr;
-    graphicPipelineCreateInfo.pColorBlendState = nullptr;
-    //graphicPipelineCreateInfo.pColorBlendState = &colorBlend;
+    graphicPipelineCreateInfo.pColorBlendState = &colorBlend;
     graphicPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
     graphicPipelineCreateInfo.layout = pipelineLayout;
     graphicPipelineCreateInfo.renderPass = renderPass->RenderPass;
