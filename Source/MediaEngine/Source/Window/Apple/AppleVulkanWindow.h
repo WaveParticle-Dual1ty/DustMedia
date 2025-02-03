@@ -19,6 +19,11 @@ public:
     virtual void SetEventCallback(const EventCallbackFn& callback) override;
     virtual void* GetNativeWindow() const override;
 
+    virtual bool IsKeyPressed(KeyCode keycode) override;
+    virtual bool IsMouseButtonPressed(MouseCode button) override;
+    virtual float GetMouseX() override;
+    virtual float GetMouseY() override;
+
 private:
     static void GLFWErrorCallback(int error, const char* description);
     void SetEventCallback();

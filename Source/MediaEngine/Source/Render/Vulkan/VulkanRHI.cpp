@@ -11,6 +11,7 @@
 #include "VulkanRHIFramebuffer.h"
 #include "VulkanRHIBuffer.h"
 #include "VulkanRHIDescriptorSet.h"
+#include "VulkanWrapper.h"
 
 namespace ME
 {
@@ -1388,7 +1389,7 @@ bool VulkanRHI::SetupQueueFamilyIndices(
         if (queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
             queueFamilyIndexForCompute = i;
 
-        VkBool32 ret = vkGetPhysicalDeviceWin32PresentationSupportKHR(physicalDevice, i);
+        VkBool32 ret = VulkanWrapper::vkGetPhysicalDevicePresentationSupport(m_Instance, physicalDevice, i);
         if (ret == VK_TRUE)
         {
             VkBool32 isSupport = VK_FALSE;

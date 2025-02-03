@@ -28,6 +28,8 @@ elseif(APPLE)
         ${IMGUI_COMMON_SOURCES}
         ${IMGUI_SRC_DIR}/backends/imgui_impl_glfw.h
         ${IMGUI_SRC_DIR}/backends/imgui_impl_glfw.cpp
+        ${IMGUI_SRC_DIR}/backends/imgui_impl_vulkan.h
+        ${IMGUI_SRC_DIR}/backends/imgui_impl_vulkan.cpp
     )
 else()
     message(FATAL_ERROR "Unsuport platform")

@@ -86,6 +86,36 @@ void* AppleVulkanWindow::GetNativeWindow() const
     return m_Window;
 }
 
+bool AppleVulkanWindow::IsKeyPressed(KeyCode keycode)
+{
+    int code = ME::Utils::ConvertMEKeycodeToGLFWKeycode(keycode);
+    int state = glfwGetKey(m_Window, code);
+    return state == GLFW_PRESS;
+}
+
+bool AppleVulkanWindow::IsMouseButtonPressed(MouseCode button)
+{
+    int code = ME::Utils::ConvertMEMouseCodeGLFWMouseButton(button);
+    int state = glfwGetMouseButton(m_Window, code);
+    return state == GLFW_PRESS;
+}
+
+float AppleVulkanWindow::GetMouseX()
+{
+    double xPos = 0;
+    double yPos = 0;
+    glfwGetCursorPos(m_Window, &xPos, &yPos);
+    return (float)xPos;
+}
+
+float AppleVulkanWindow::GetMouseY()
+{
+    double xPos = 0;
+    double yPos = 0;
+    glfwGetCursorPos(m_Window, &xPos, &yPos);
+    return (float)yPos;
+}
+
 void AppleVulkanWindow::GLFWErrorCallback(int error, const char* description)
 {
     WND_LOG_ERROR("GLFW Error ({}): {}", error, description);
@@ -125,21 +155,21 @@ void AppleVulkanWindow::SetEventCallback()
             {
                 case GLFW_PRESS:
                 {
-                    KeyCode code = Utils::ConvertGLFWKeycodeToHazelKeycode(key);
+                    KeyCode code = Utils::ConvertGLFWKeycodeToMEKeycode(key);
                     KeyPressedEvent event(code, false);
                     data.EventCallback(event);
                     break;
                 }
                 case GLFW_RELEASE:
                 {
-                    KeyCode code = Utils::ConvertGLFWKeycodeToHazelKeycode(key);
+                    KeyCode code = Utils::ConvertGLFWKeycodeToMEKeycode(key);
                     KeyReleasedEvent event(code);
                     data.EventCallback(event);
                     break;
                 }
                 case GLFW_REPEAT:
                 {
-                    KeyCode code = Utils::ConvertGLFWKeycodeToHazelKeycode(key);
+                    KeyCode code = Utils::ConvertGLFWKeycodeToMEKeycode(key);
                     KeyPressedEvent event(code, true);
                     data.EventCallback(event);
                     break;
@@ -166,14 +196,14 @@ void AppleVulkanWindow::SetEventCallback()
             {
                 case GLFW_PRESS:
                 {
-                    MouseCode code = Utils::ConvertGLFWMouseButtonToHazelMouseCode(button);
+                    MouseCode code = Utils::ConvertGLFWMouseButtonToMEMouseCode(button);
                     MouseButtonPressedEvent event(code);
                     data.EventCallback(event);
                     break;
                 }
                 case GLFW_RELEASE:
                 {
-                    MouseCode code = Utils::ConvertGLFWMouseButtonToHazelMouseCode(button);
+                    MouseCode code = Utils::ConvertGLFWMouseButtonToMEMouseCode(button);
                     MouseButtonReleasedEvent event(code);
                     data.EventCallback(event);
                     break;

@@ -152,6 +152,16 @@ struct RHIColor
     float G = 0;
     float B = 0;
     float A = 0;
+
+    RHIColor() = default;
+
+    RHIColor(float r, float g, float b, float a)
+        : R(r)
+        , G(g)
+        , B(b)
+        , A(a)
+    {
+    }
 };
 
 struct RHIColorClearValue
