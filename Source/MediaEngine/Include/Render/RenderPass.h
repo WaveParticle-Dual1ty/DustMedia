@@ -2,7 +2,7 @@
 #include <cstdint>
 #include "RHI.h"
 #include "RHIResources.h"
-#include "RHIFrameBuffer.h"
+#include "RHIFramebuffer.h"
 
 namespace ME
 {

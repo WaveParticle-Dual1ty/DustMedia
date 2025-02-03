@@ -13,7 +13,7 @@ std::unique_ptr<ME::Application> ME::CreateApplication()
 }
 
 DustImageViewerApp::DustImageViewerApp()
-    : Application({"Dust Image Viewer"})
+    : Application({"Dust Image Viewer", "", ""})
 {
 }
 

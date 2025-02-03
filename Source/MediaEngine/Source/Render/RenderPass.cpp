@@ -24,6 +24,7 @@ bool FRenderPass::Resize(uint32_t w, uint32_t h)
 
 bool FRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
 {
+    static_cast<void>(cmdBuffer);
     return true;
 }
 

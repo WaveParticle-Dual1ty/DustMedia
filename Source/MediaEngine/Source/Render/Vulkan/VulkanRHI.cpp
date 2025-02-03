@@ -562,7 +562,7 @@ Ref<RHIDescriptorSet> VulkanRHI::CreateRHIDescriptorSet(RHIDescriptorSetCreateIn
 {
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     bindings.resize(createInfo.BindingDescs.size());
-    for (int i = 0; i < createInfo.BindingDescs.size(); ++i)
+    for (size_t i = 0; i < createInfo.BindingDescs.size(); ++i)
     {
         RHIDescriptorSetBindingDesc rhiBinding = createInfo.BindingDescs[i];
         VkDescriptorSetLayoutBinding binding = {};
