@@ -138,6 +138,12 @@ enum class ERHIImageLayout
     RHI_IMAGE_LAYOUT_MAX_ENUM
 };
 
+struct RHIExtend2D
+{
+    uint32_t Width = 0;
+    uint32_t Height = 0;
+};
+
 struct RHIRenderArea
 {
     int32_t OffsetX = 0;
@@ -170,6 +176,12 @@ struct RHIColorClearValue
     float G = 0;
     float B = 0;
     float A = 0;
+};
+
+struct RHISwapchainInfo
+{
+    RHIExtend2D Extend;
+    ERHIPixelFormat PixelFormat = ERHIPixelFormat::PF_Unknown;
 };
 
 struct RHIRenderPassBeginInfo

@@ -33,6 +33,7 @@ public:
 
     virtual Ref<RHICommandBuffer> GetCurrentCommandBuffer() const override;
     virtual Ref<RHITexture2D> GetCurrentBackTexture() override;
+    virtual RHISwapchainInfo GetSwapchainInfo() override;
 
     // ImGui
     virtual void* CreateImTextureID(Ref<RHITexture2D> texture) override;
@@ -143,6 +144,7 @@ private:
         VulkanQueue graphicQueue);
     std::vector<VkSurfaceFormatKHR> GetSupportSurfaceFormats(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
     std::vector<VkPresentModeKHR> GetSupportPresentModes(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+    VkExtent2D GetSwapchainExtend(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t wndWidth, uint32_t wndHeight);
     bool CreateSwapchainResources(
         VkSwapchainKHR& swapchain,
         std::vector<Ref<VulkanRHITexture2D>>& swapchainTextures,
@@ -174,6 +176,7 @@ private:
     VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
     VkDevice m_Device = VK_NULL_HANDLE;
+
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     VulkanQueue m_GraphicQueue;
     VulkanQueue m_PresentQueue;
@@ -181,8 +184,10 @@ private:
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     Ref<VulkanRHICommandBuffer> m_RHICommandBuffer;
     VkFence m_FenceForCommandBuffer = VK_NULL_HANDLE;
+
     const uint32_t m_MinImageCount = 2;
     VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
+    VkExtent2D m_SwapchainExtend = {0, 0};
     std::vector<Ref<VulkanRHITexture2D>> m_SwapchainTextures;
     uint32_t m_SwapchainFrameIndex = 0;
     std::vector<VkSemaphore> m_ImageAcquiredSemaphores;

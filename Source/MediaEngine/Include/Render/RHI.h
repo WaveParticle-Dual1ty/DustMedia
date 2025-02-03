@@ -32,6 +32,7 @@ public:
 
     virtual Ref<RHICommandBuffer> GetCurrentCommandBuffer() const = 0;
     virtual Ref<RHITexture2D> GetCurrentBackTexture() = 0;
+    virtual RHISwapchainInfo GetSwapchainInfo() = 0;
 
     // ImGui
     virtual void* CreateImTextureID(Ref<RHITexture2D> texture) = 0;

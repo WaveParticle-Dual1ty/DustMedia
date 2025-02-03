@@ -58,7 +58,9 @@ void Application::Run()
                 break;
             }
 
-            ret = m_ImGuiRenderPass->Resize(w, h);
+            RHISwapchainInfo swapchainInfo = m_RHI->GetSwapchainInfo();
+            RHIExtend2D swapchainSize = swapchainInfo.Extend;
+            ret = m_ImGuiRenderPass->Resize(swapchainSize.Width, swapchainSize.Height);
             if (!ret)
             {
                 APP_LOG_ERROR("ImGuiRenderPass::Resize fail");
@@ -203,9 +205,9 @@ bool Application::InitApp()
     //if (m_EnableUI)
     {
         m_ImGuiRenderPass = CreateRef<ImGuiRenderPass>(m_RHI);
-        uint32_t w = m_Window->GetWidth();
-        uint32_t h = m_Window->GetHeight();
-        ret = m_ImGuiRenderPass->Initialize(w, h);
+        RHISwapchainInfo swapchainInfo = m_RHI->GetSwapchainInfo();
+        RHIExtend2D swapchainSize = swapchainInfo.Extend;
+        ret = m_ImGuiRenderPass->Initialize(swapchainSize.Width, swapchainSize.Height);
         if (!ret)
         {
             APP_LOG_ERROR("ImGuiRenderPass::Initialize fail");

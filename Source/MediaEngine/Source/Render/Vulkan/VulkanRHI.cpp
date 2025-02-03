@@ -79,12 +79,10 @@ bool VulkanRHI::Initialize(std::shared_ptr<Window> wnd)
     ret = CreateCommandResourcesForGraphic(
         m_CommandPool, m_RHICommandBuffer->CommandBuffer, m_FenceForCommandBuffer, m_Device, m_GraphicQueue);
 
-    uint32_t w = wnd->GetWidth();
-    uint32_t h = wnd->GetHeight();
-    VkExtent2D extend{w, h};
+    m_SwapchainExtend = GetSwapchainExtend(m_PhysicalDevice, m_Surface, wnd->GetWidth(), wnd->GetHeight());
     ret = CreateSwapchainResources(
         m_Swapchain, m_SwapchainTextures, m_ImageAcquiredSemaphores, m_RenderCompleteSemaphores, m_PhysicalDevice,
-        m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, extend, m_MinImageCount);
+        m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, m_SwapchainExtend, m_MinImageCount);
     m_GraphicSemaphoreCnt = (uint32_t)m_ImageAcquiredSemaphores.size();
 
     m_DescriptorPool = CreateDescriptorPool(m_Device);
@@ -139,10 +137,10 @@ bool VulkanRHI::Resize(uint32_t width, uint32_t height)
     vkDestroySwapchainKHR(m_Device, m_Swapchain, VK_NULL_HANDLE);
     m_Swapchain = VK_NULL_HANDLE;
 
-    VkExtent2D extend{width, height};
+    m_SwapchainExtend = GetSwapchainExtend(m_PhysicalDevice, m_Surface, width, height);
     bool ret = CreateSwapchainResources(
         m_Swapchain, m_SwapchainTextures, m_ImageAcquiredSemaphores, m_RenderCompleteSemaphores, m_PhysicalDevice,
-        m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, extend, 2);
+        m_Device, m_GraphicQueue, m_PresentQueue, m_Surface, m_SwapchainExtend, 2);
     if (!ret)
     {
         RENDER_LOG_ERROR("CreateSwapchainResources fail");
@@ -253,6 +251,14 @@ Ref<RHITexture2D> VulkanRHI::GetCurrentBackTexture()
 {
     Ref<VulkanRHITexture2D> currentTex = m_SwapchainTextures[m_SwapchainFrameIndex];
     return currentTex;
+}
+
+RHISwapchainInfo VulkanRHI::GetSwapchainInfo()
+{
+    RHISwapchainInfo res;
+    res.Extend = {m_SwapchainExtend.width, m_SwapchainExtend.height};
+    res.PixelFormat = ERHIPixelFormat::PF_Unknown;
+    return res;
 }
 
 void* VulkanRHI::CreateImTextureID(Ref<RHITexture2D> texture)
@@ -1596,6 +1602,21 @@ std::vector<VkPresentModeKHR> VulkanRHI::GetSupportPresentModes(VkPhysicalDevice
     }
 
     return res;
+}
+
+VkExtent2D
+VulkanRHI::GetSwapchainExtend(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t wndWidth, uint32_t wndHeight)
+{
+    VkSurfaceCapabilitiesKHR surfaceCapability;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &surfaceCapability);
+
+    VkExtent2D extend{0, 0};
+    if (surfaceCapability.currentExtent.width != UINT32_MAX)
+        extend = surfaceCapability.currentExtent;
+    else
+        extend = {wndWidth, wndHeight};
+
+    return extend;
 }
 
 bool VulkanRHI::CreateSwapchainResources(
