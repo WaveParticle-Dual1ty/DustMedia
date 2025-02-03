@@ -23,6 +23,9 @@ public:
 
 private:
     static void CheckVkResult(VkResult err);
+
+private:
+    std::string m_IniFile;
 };
 
 }  //namespace ME

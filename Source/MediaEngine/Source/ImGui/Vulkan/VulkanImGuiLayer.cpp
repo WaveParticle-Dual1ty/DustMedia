@@ -54,7 +54,8 @@ bool VulkanImGuiLayer::Init(
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    io.IniFilename = iniFilename.c_str();
+    m_IniFile = iniFilename + " .ini";
+    io.IniFilename = m_IniFile.c_str();
 
     ImGui::StyleColorsDark();
 
