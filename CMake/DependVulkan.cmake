@@ -25,16 +25,19 @@ if(WIN32)
         ${VULKAN_LIB_DIR}/SDL2.lib
     )
 elseif(APPLE)
-    set(VULKAN_INCLUDE_DIR ${PROJ_DEPENDS_DIR}/VulkanSDK/Apple/Include)
-    set(VULKAN_LIB_DIR ${PROJ_DEPENDS_DIR}/VulkanSDK/Apple/Lib)
-    set(VULKAN_BIN_DIR ${PROJ_DEPENDS_DIR}/VulkanSDK/Apple/Bin)
+    set(VULKAN_PATH ${PROJ_DEPENDS_DIR}/VulkanSDK/Apple)
+    set(VULKAN_INCLUDE_DIR ${VULKAN_PATH}/include)
+    set(VULKAN_LIB_DIR ${VULKAN_PATH}/lib)
+    set(VULKAN_BIN_DIR ${VULKAN_PATH}/bin)
     set(VULKAN_LIBS_DEBUG
-        ${VULKAN_BIN_DIR}/libshaderc_shared.1.dylib
+        ${VULKAN_LIB_DIR}/libvulkan.dylib
+        ${VULKAN_LIB_DIR}/libshaderc_shared.dylib
         ${VULKAN_LIB_DIR}/libspirv-cross-core.a
         ${VULKAN_LIB_DIR}/libspirv-cross-glsl.a
     )
     set(VULKAN_LIBS_RELEASE
-        ${VULKAN_BIN_DIR}/libshaderc_shared.1.dylib
+        ${VULKAN_LIB_DIR}/libvulkan.dylib
+        ${VULKAN_LIB_DIR}/libshaderc_shared.dylib
         ${VULKAN_LIB_DIR}/libspirv-cross-core.a
         ${VULKAN_LIB_DIR}/libspirv-cross-glsl.a
     )
