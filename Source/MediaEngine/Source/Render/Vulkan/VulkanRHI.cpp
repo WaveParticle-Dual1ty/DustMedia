@@ -80,7 +80,7 @@ bool VulkanRHI::Initialize(std::shared_ptr<Window> wnd)
         m_CommandPool, m_RHICommandBuffer->CommandBuffer, m_FenceForCommandBuffer, m_Device, m_GraphicQueue);
 
     uint32_t w = wnd->GetWidth();
-    uint32_t h = wnd->GetWidth();
+    uint32_t h = wnd->GetHeight();
     VkExtent2D extend{w, h};
     ret = CreateSwapchainResources(
         m_Swapchain, m_SwapchainTextures, m_ImageAcquiredSemaphores, m_RenderCompleteSemaphores, m_PhysicalDevice,
