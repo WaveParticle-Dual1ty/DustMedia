@@ -26,8 +26,50 @@ VkFormat ConvertERHIPixelFormatToVkFormat(ERHIPixelFormat format)
         case ERHIPixelFormat::PF_R8G8B8A8_UNORM:
             res = VK_FORMAT_R8G8B8A8_UNORM;
             break;
+        case ERHIPixelFormat::PF_B8G8R8_UNORM:
+            res = VK_FORMAT_B8G8R8_UNORM;
+            break;
+        case ERHIPixelFormat::PF_B8G8R8A8_UNORM:
+            res = VK_FORMAT_B8G8R8A8_UNORM;
+            break;
         default:
             res = VK_FORMAT_UNDEFINED;
+            ME_ASSERT(false, "Not support now");
+            break;
+    }
+
+    return res;
+}
+
+ERHIPixelFormat ConvertVkFormatToERHIPixelFormat(VkFormat format)
+{
+    ERHIPixelFormat res = ERHIPixelFormat::PF_Unknown;
+
+    switch (format)
+    {
+        case VK_FORMAT_UNDEFINED:
+            res = ERHIPixelFormat::PF_Unknown;
+            break;
+        case VK_FORMAT_R8_UNORM:
+            res = ERHIPixelFormat::PF_R8_UNORM;
+            break;
+        case VK_FORMAT_R8G8_UNORM:
+            res = ERHIPixelFormat::PF_R8G8_UNORM;
+            break;
+        case VK_FORMAT_R8G8B8_UNORM:
+            res = ERHIPixelFormat::PF_R8G8B8_UNORM;
+            break;
+        case VK_FORMAT_R8G8B8A8_UNORM:
+            res = ERHIPixelFormat::PF_R8G8B8A8_UNORM;
+            break;
+        case VK_FORMAT_B8G8R8_UNORM:
+            res = ERHIPixelFormat::PF_B8G8R8_UNORM;
+            break;
+        case VK_FORMAT_B8G8R8A8_UNORM:
+            res = ERHIPixelFormat::PF_B8G8R8A8_UNORM;
+            break;
+        default:
+            res = ERHIPixelFormat::PF_Unknown;
             ME_ASSERT(false, "Not support now");
             break;
     }

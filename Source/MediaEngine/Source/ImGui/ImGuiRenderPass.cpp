@@ -16,7 +16,7 @@ bool ImGuiRenderPass::Initialize(uint32_t w, uint32_t h)
     FRenderPass::Initialize(w, h);
 
     RHIRenderPassCreateDesc desc;
-    desc.PixelFormat = ERHIPixelFormat::PF_R8G8B8A8_UNORM;
+    desc.PixelFormat = m_SwapchainFormat;
     m_RHIRenderPass = m_RHI->CreateRHIRenderPass(desc);
     if (!m_RHIRenderPass)
     {
@@ -25,7 +25,7 @@ bool ImGuiRenderPass::Initialize(uint32_t w, uint32_t h)
     }
 
     RHITexture2DCreateDesc texCreateDesc;
-    texCreateDesc.PixelFormat = ERHIPixelFormat::PF_R8G8B8A8_UNORM;
+    texCreateDesc.PixelFormat = m_SwapchainFormat;
     texCreateDesc.Width = w;
     texCreateDesc.Height = h;
     texCreateDesc.NumMips = 1;
@@ -62,7 +62,7 @@ bool ImGuiRenderPass::Resize(uint32_t w, uint32_t h)
     m_RHIFrameBuffer = nullptr;
 
     RHITexture2DCreateDesc texCreateDesc;
-    texCreateDesc.PixelFormat = ERHIPixelFormat::PF_R8G8B8A8_UNORM;
+    texCreateDesc.PixelFormat = m_SwapchainFormat;
     texCreateDesc.Width = w;
     texCreateDesc.Height = h;
     texCreateDesc.NumMips = 1;
@@ -110,4 +110,10 @@ bool ImGuiRenderPass::Draw(Ref<RHICommandBuffer> cmdBuffer)
 
     return true;
 }
+
+void ImGuiRenderPass::SetSwapchainFormat(ERHIPixelFormat format)
+{
+    m_SwapchainFormat = format;
+}
+
 }  //namespace ME

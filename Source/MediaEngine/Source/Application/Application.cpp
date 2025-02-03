@@ -206,6 +206,8 @@ bool Application::InitApp()
     {
         m_ImGuiRenderPass = CreateRef<ImGuiRenderPass>(m_RHI);
         RHISwapchainInfo swapchainInfo = m_RHI->GetSwapchainInfo();
+        m_ImGuiRenderPass->SetSwapchainFormat(swapchainInfo.PixelFormat);
+
         RHIExtend2D swapchainSize = swapchainInfo.Extend;
         ret = m_ImGuiRenderPass->Initialize(swapchainSize.Width, swapchainSize.Height);
         if (!ret)

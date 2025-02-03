@@ -13,6 +13,8 @@ namespace ME
 namespace Util
 {
 VkFormat ConvertERHIPixelFormatToVkFormat(ERHIPixelFormat format);
+ERHIPixelFormat ConvertVkFormatToERHIPixelFormat(VkFormat format);
+
 VkPipelineStageFlags ConvertERHIPipelineStageFlagToVkPipelineStageFlags(ERHIPipelineStageFlag flag);
 VkAccessFlags ConvertERHIAccessFlagToVkAccessFlags(ERHIAccessFlag flag);
 VkImageAspectFlags ConvertERHIImageAspectFlagToVkImageAspectFlags(ERHIImageAspectFlag flag);

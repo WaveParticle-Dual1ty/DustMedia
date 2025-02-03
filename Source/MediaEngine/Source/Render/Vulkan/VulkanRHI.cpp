@@ -257,7 +257,7 @@ RHISwapchainInfo VulkanRHI::GetSwapchainInfo()
 {
     RHISwapchainInfo res;
     res.Extend = {m_SwapchainExtend.width, m_SwapchainExtend.height};
-    res.PixelFormat = ERHIPixelFormat::PF_Unknown;
+    res.PixelFormat = Util::ConvertVkFormatToERHIPixelFormat(m_SwapchainFormat);
     return res;
 }
 
@@ -1646,6 +1646,7 @@ bool VulkanRHI::CreateSwapchainResources(
             break;
         }
     }
+    m_SwapchainFormat = surfaceFormat.format;
 
     VkPresentModeKHR presentMode = supportPresentModes[0];
     for (auto mode : supportPresentModes)

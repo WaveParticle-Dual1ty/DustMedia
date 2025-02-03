@@ -186,8 +186,9 @@ private:
     VkFence m_FenceForCommandBuffer = VK_NULL_HANDLE;
 
     const uint32_t m_MinImageCount = 2;
-    VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
     VkExtent2D m_SwapchainExtend = {0, 0};
+    VkFormat m_SwapchainFormat = VK_FORMAT_UNDEFINED;
+    VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
     std::vector<Ref<VulkanRHITexture2D>> m_SwapchainTextures;
     uint32_t m_SwapchainFrameIndex = 0;
     std::vector<VkSemaphore> m_ImageAcquiredSemaphores;
