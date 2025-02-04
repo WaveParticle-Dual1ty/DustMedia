@@ -26,6 +26,15 @@ if(WIN32)
     # todo: use custom target
     file(COPY ${FFMPEG_FILE_TO_COPY} DESTINATION ${FFMPEG_DESTINATION_DIR_DEBUG})
     file(COPY ${FFMPEG_FILE_TO_COPY} DESTINATION ${FFMPEG_DESTINATION_DIR_RELEASE})
+elseif(APPLE)
+    set(FFMPEG_INCLUDE_DIR ${PROJ_DEPENDS_DIR}/FFmpeg/Apple/include)
+    set(FFMPEG_LIB_DIR ${PROJ_DEPENDS_DIR}/FFmpeg/Apple/lib)
+    set(FFMPEG_LIBS
+        ${FFMPEG_LIB_DIR}/libavutil.dylib
+        ${FFMPEG_LIB_DIR}/libavformat.dylib
+        ${FFMPEG_LIB_DIR}/libavcodec.dylib
+        ${FFMPEG_LIB_DIR}/libswresample.dylib
+    )
 else()
     message(FATAL_ERROR "Unsuport platform Unknown")
 endif()

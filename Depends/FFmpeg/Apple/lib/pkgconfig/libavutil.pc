@@ -1,0 +1,14 @@
+prefix=/Users/wang/Desktop/OpenSource/ffmpeg/out
+exec_prefix=${prefix}
+libdir=/Users/wang/Desktop/OpenSource/ffmpeg/out/lib
+includedir=/Users/wang/Desktop/OpenSource/ffmpeg/out/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 59.39.100
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil 
+Libs.private: -pthread -lm -framework VideoToolbox -framework CoreFoundation -framework CoreMedia -framework CoreVideo -framework CoreServices
+Cflags: -I${includedir}
