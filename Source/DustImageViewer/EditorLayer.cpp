@@ -41,10 +41,10 @@ void EditorLayer::OnUIUpdate()
             ImGui::Text("File size: %s", file->GetFileSizeInStr().c_str());
         }
 
-        ME::Ref<ME::ImageDetect> detect = m_CurrentImage.Detect;
+        ME::Ref<ME::ImageLoader> imageLoader = m_CurrentImage.ImageLoader;
         if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            const ME::ImageInfo& imageInfo = detect->GetImageInfo();
+            const ME::ImageInfo& imageInfo = imageLoader->GetImageInfo();
             std::string format = ME::Utils::EMPixelFormatToStr(imageInfo.Format);
 
             ImGui::Text("Type:   \t%s", imageInfo.TypeInStr.c_str());
@@ -156,36 +156,26 @@ bool EditorLayer::OnFileDrop(ME::FileDropEvent& event)
         return false;
     }
 
-    ME::Ref<ME::ImageDetect>& detect = image.Detect;
-    detect = ME::ImageDetect::CreateInstance(imagePath);
-    detect->Detect();
-    if (!detect->Avaliable())
+    ME::Ref<ME::ImageLoader>& imageLoader = image.ImageLoader;
+    imageLoader = ME::ImageLoader::CreateInstance(imagePath);
+    imageLoader->Detect();
+    bool res = imageLoader->Avaliable();
+    if (!res)
     {
         IMAGEVIWER_LOG_WARN("File not Avaliable: {}", imagePath);
         return false;
     }
 
-    image.Avaliable = true;
-
-#if 0
-    if (file->IsExist())
+    res = imageLoader->Load();
+    if (!res)
     {
-        ME::Ref<ME::ImageLoader>& image = image.Image;
-        image = ME::CreateRef<ME::ImageLoader>();
-        bool ret = image->Load(imagePath);
-        if (ret)
-        {
-            image.Avaliable = true;
-        }
-        else
-        {
-            IMAGEVIWER_LOG_WARN("Fail to load image: {}", imagePath);
-            image.Avaliable = false;
-            image.File = nullptr;
-            image.Image = nullptr;
-        }
+        IMAGEVIWER_LOG_WARN("Image fail to oad: {}", imagePath);
+        return false;
     }
-#endif
+
+    ME::ImageFrame frame = imageLoader->GetImageFrame();
+
+    image.Avaliable = true;
 
     if (image.Avaliable == true)
         m_CurrentImage = image;

@@ -4,7 +4,6 @@
 #include "MediaEngine/Include/Event/ApplicationEvent.h"
 #include "MediaEngine/Include/FileSystem/FileReader.h"
 #include "MediaEngine/Include/Media/ImageLoader.h"
-#include "MediaEngine/Include/Media/ImageDetect.h"
 
 class EditorLayer : public ME::Layer
 {
@@ -29,8 +28,7 @@ private:
     {
         bool Avaliable = false;
         ME::Ref<ME::FileReader> FileReader;
-        ME::Ref<ME::ImageDetect> Detect;
-        ME::Ref<ME::ImageLoader> Loader;
+        ME::Ref<ME::ImageLoader> ImageLoader;
     };
 
     Image m_CurrentImage;

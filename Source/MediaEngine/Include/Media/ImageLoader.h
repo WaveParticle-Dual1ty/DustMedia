@@ -1,27 +1,23 @@
 ﻿#pragma once
 #include <cstdint>
 #include <string>
+#include "MediaEngine/Include/Core/Ptr.h"
+#include "ImageStruct.h"
 
 namespace ME
 {
 class ImageLoader
 {
 public:
-    bool Load(const std::string& imagePath);
-    void Free();
+    static Ref<ImageLoader> CreateInstance(const std::string& path);
 
-    const std::string& GetFilePath();
-    uint32_t GetWidth();
-    uint32_t GetHeight();
-    uint32_t GetDataSize();
-    void* GetData();
-
-private:
-    std::string m_FilePath;
-    uint32_t m_Width = 0;
-    uint32_t m_Height = 0;
-    uint32_t m_DataSize = 0;
-    void* m_Data = nullptr;
+public:
+    virtual void Detect() = 0;
+    virtual bool Avaliable() = 0;
+    virtual ImageInfo GetImageInfo() = 0;
+    virtual const ImageInfo& GetImageInfo() const = 0;
+    virtual bool Load() = 0;
+    virtual ImageFrame GetImageFrame() = 0;
 };
 
 }  //namespace ME

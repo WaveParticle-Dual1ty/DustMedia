@@ -1,4 +1,4 @@
-﻿#include "MediaEngine/Include/Media/ImageDetect.h"
+﻿#include "ImageUtils.h"
 #include "MediaEngine/Include/Core/Assert.h"
 #include "ImageUtils.h"
 
