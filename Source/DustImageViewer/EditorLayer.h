@@ -3,6 +3,7 @@
 #include "MediaEngine/Include/Application/Layer.h"
 #include "MediaEngine/Include/Event/ApplicationEvent.h"
 #include "MediaEngine/Include/Media/ImageLoader.h"
+#include "MediaEngine/Include/FileSystem/FileReader.h"
 
 class EditorLayer : public ME::Layer
 {
@@ -23,5 +24,12 @@ private:
     bool OnFileDrop(ME::FileDropEvent& event);
 
 private:
-    ME::Ref<ME::ImageLoader> m_CurrentImage;
+    struct ImageDesc
+    {
+        bool Avaliable = false;
+        ME::Ref<ME::FileReader> File;
+        ME::Ref<ME::ImageLoader> Image;
+    };
+
+    ImageDesc m_CurrentImage;
 };

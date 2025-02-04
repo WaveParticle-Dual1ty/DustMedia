@@ -30,17 +30,21 @@ void EditorLayer::OnUIUpdate()
     // Information
     ImGui::Begin("Information");
 
-    if (m_CurrentImage != nullptr)
+    if (m_CurrentImage.Avaliable)
     {
+        ME::Ref<ME::FileReader> file = m_CurrentImage.File;
         if (ImGui::CollapsingHeader("File", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::Text("File path: %s", m_CurrentImage->GetFilePath().c_str());
+            ImGui::Text("File Name: %s", file->GetFileName().c_str());
+            ImGui::Text("File path: %s", file->GetFullPath().c_str());
+            ImGui::Text("File size: %s", file->GetFileSizeInStr().c_str());
         }
 
+        ME::Ref<ME::ImageLoader> image = m_CurrentImage.Image;
         if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::Text("Width:  \t%d", m_CurrentImage->GetWidth());
-            ImGui::Text("Height: \t%d", m_CurrentImage->GetHeight());
+            ImGui::Text("Width:  \t%d", image->GetWidth());
+            ImGui::Text("Height: \t%d", image->GetHeight());
         }
     }
 
@@ -135,14 +139,31 @@ void EditorLayer::EndDockspace()
 bool EditorLayer::OnFileDrop(ME::FileDropEvent& event)
 {
     std::string imagePath = event.GetDropFiles()[0];
-    m_CurrentImage = ME::CreateRef<ME::ImageLoader>();
-    bool ret = m_CurrentImage->Load(imagePath);
-    if (!ret)
+
+    ImageDesc imageDesc;
+    ME::Ref<ME::FileReader>& file = imageDesc.File;
+    file = ME::CreateRef<ME::FileReader>(imagePath);
+    file->Detect();
+    if (file->IsExist())
     {
-        IMAGEVIWER_LOG_WARN("Fail to load image: {}", imagePath);
-        m_CurrentImage = nullptr;
-        return false;
+        ME::Ref<ME::ImageLoader>& image = imageDesc.Image;
+        image = ME::CreateRef<ME::ImageLoader>();
+        bool ret = image->Load(imagePath);
+        if (ret)
+        {
+            imageDesc.Avaliable = true;
+        }
+        else
+        {
+            IMAGEVIWER_LOG_WARN("Fail to load image: {}", imagePath);
+            imageDesc.Avaliable = false;
+            imageDesc.File = nullptr;
+            imageDesc.Image = nullptr;
+        }
     }
+
+    if (imageDesc.Avaliable == true)
+        m_CurrentImage = imageDesc;
 
     return false;
 }
