@@ -2,8 +2,9 @@
 #include "MediaEngine/Include/Core/Ptr.h"
 #include "MediaEngine/Include/Application/Layer.h"
 #include "MediaEngine/Include/Event/ApplicationEvent.h"
-#include "MediaEngine/Include/Media/ImageLoader.h"
 #include "MediaEngine/Include/FileSystem/FileReader.h"
+#include "MediaEngine/Include/Media/ImageLoader.h"
+#include "MediaEngine/Include/Media/ImageDetect.h"
 
 class EditorLayer : public ME::Layer
 {
@@ -24,12 +25,13 @@ private:
     bool OnFileDrop(ME::FileDropEvent& event);
 
 private:
-    struct ImageDesc
+    struct Image
     {
         bool Avaliable = false;
-        ME::Ref<ME::FileReader> File;
-        ME::Ref<ME::ImageLoader> Image;
+        ME::Ref<ME::FileReader> FileReader;
+        ME::Ref<ME::ImageDetect> Detect;
+        ME::Ref<ME::ImageLoader> Loader;
     };
 
-    ImageDesc m_CurrentImage;
+    Image m_CurrentImage;
 };

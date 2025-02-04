@@ -3,6 +3,7 @@
 #include "ThirdParty/imgui/imgui.h"
 #include "MediaEngine/Include/Core/Assert.h"
 #include "MediaEngine/Include/Application/Application.h"
+#include "MediaEngine/Include/Media/MediaEnumToStr.h"
 #include "DustImageViewerLog.h"
 
 EditorLayer::EditorLayer()
@@ -32,7 +33,7 @@ void EditorLayer::OnUIUpdate()
 
     if (m_CurrentImage.Avaliable)
     {
-        ME::Ref<ME::FileReader> file = m_CurrentImage.File;
+        ME::Ref<ME::FileReader> file = m_CurrentImage.FileReader;
         if (ImGui::CollapsingHeader("File", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::Text("File Name: %s", file->GetFileName().c_str());
@@ -40,11 +41,16 @@ void EditorLayer::OnUIUpdate()
             ImGui::Text("File size: %s", file->GetFileSizeInStr().c_str());
         }
 
-        ME::Ref<ME::ImageLoader> image = m_CurrentImage.Image;
+        ME::Ref<ME::ImageDetect> detect = m_CurrentImage.Detect;
         if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            ImGui::Text("Width:  \t%d", image->GetWidth());
-            ImGui::Text("Height: \t%d", image->GetHeight());
+            const ME::ImageInfo& imageInfo = detect->GetImageInfo();
+            std::string format = ME::Utils::EMPixelFormatToStr(imageInfo.Format);
+
+            ImGui::Text("Type:   \t%s", imageInfo.TypeInStr.c_str());
+            ImGui::Text("Width:  \t%d", imageInfo.Width);
+            ImGui::Text("Height: \t%d", imageInfo.Height);
+            ImGui::Text("Format: \t%s", format.c_str());
         }
     }
 
@@ -140,30 +146,49 @@ bool EditorLayer::OnFileDrop(ME::FileDropEvent& event)
 {
     std::string imagePath = event.GetDropFiles()[0];
 
-    ImageDesc imageDesc;
-    ME::Ref<ME::FileReader>& file = imageDesc.File;
+    Image image;
+    ME::Ref<ME::FileReader>& file = image.FileReader;
     file = ME::CreateRef<ME::FileReader>(imagePath);
     file->Detect();
+    if (!file->IsExist())
+    {
+        IMAGEVIWER_LOG_WARN("File not exist: {}", imagePath);
+        return false;
+    }
+
+    ME::Ref<ME::ImageDetect>& detect = image.Detect;
+    detect = ME::ImageDetect::CreateInstance(imagePath);
+    detect->Detect();
+    if (!detect->Avaliable())
+    {
+        IMAGEVIWER_LOG_WARN("File not Avaliable: {}", imagePath);
+        return false;
+    }
+
+    image.Avaliable = true;
+
+#if 0
     if (file->IsExist())
     {
-        ME::Ref<ME::ImageLoader>& image = imageDesc.Image;
+        ME::Ref<ME::ImageLoader>& image = image.Image;
         image = ME::CreateRef<ME::ImageLoader>();
         bool ret = image->Load(imagePath);
         if (ret)
         {
-            imageDesc.Avaliable = true;
+            image.Avaliable = true;
         }
         else
         {
             IMAGEVIWER_LOG_WARN("Fail to load image: {}", imagePath);
-            imageDesc.Avaliable = false;
-            imageDesc.File = nullptr;
-            imageDesc.Image = nullptr;
+            image.Avaliable = false;
+            image.File = nullptr;
+            image.Image = nullptr;
         }
     }
+#endif
 
-    if (imageDesc.Avaliable == true)
-        m_CurrentImage = imageDesc;
+    if (image.Avaliable == true)
+        m_CurrentImage = image;
 
     return false;
 }
