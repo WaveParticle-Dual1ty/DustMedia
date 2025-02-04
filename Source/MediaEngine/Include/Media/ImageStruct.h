@@ -9,6 +9,7 @@ enum class EImageType : uint32_t
 {
     Undefined = 0,
     MJPEG,
+    BMP,
 };
 
 struct ImageInfo

@@ -95,9 +95,7 @@ const ImageInfo& ImageDetectImpl::GetImageInfo() const
 
 bool ImageDetectImpl::IsImageType(AVCodecID id)
 {
-    static std::set<AVCodecID> imageIDs = {
-        AV_CODEC_ID_MJPEG,
-    };
+    static std::set<AVCodecID> imageIDs = {AV_CODEC_ID_MJPEG, AV_CODEC_ID_BMP};
 
     if (imageIDs.find(id) != imageIDs.end())
     {

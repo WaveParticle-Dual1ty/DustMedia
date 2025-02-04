@@ -15,6 +15,9 @@ EImageType ConvertAVCodecIDToEImageType(AVCodecID id)
         case AV_CODEC_ID_MJPEG:
             res = EImageType::MJPEG;
             break;
+        case AV_CODEC_ID_BMP:
+            res = EImageType::MJPEG;
+            break;
         default:
             res = EImageType::Undefined;
             ME_ASSERT(false, "ConvertAVCodecIDToEImageType: Not support AVCodecID now");
@@ -30,6 +33,9 @@ EMPixelFormat ConvertAVPixelFormatToEMPixelFormat(AVPixelFormat format)
 
     switch (format)
     {
+        case AV_PIX_FMT_BGR24:
+            res = EMPixelFormat::BGR24;
+            break;
         case AV_PIX_FMT_YUVJ420P:
             res = EMPixelFormat::YUVJ420P;
             break;
