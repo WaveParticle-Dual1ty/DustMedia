@@ -6,6 +6,8 @@
 #include "MediaEngine/Include/Media/MediaEnumToStr.h"
 #include "DustImageViewerLog.h"
 
+using namespace ME;
+
 EditorLayer::EditorLayer()
     : Layer("EditorLayer")
 {
@@ -13,15 +15,39 @@ EditorLayer::EditorLayer()
 
 void EditorLayer::OnAttach()
 {
+    m_RHI = Application::Get().GetRHI();
+    m_ImageRenderPass = CreateRef<ImageRenderPass>(m_RHI);
+
+    bool ret = m_ImageRenderPass->Initialize(300, 200);
+    if (!ret)
+    {
+        ME_ASSERT(false, "TestRenderPass::Initialize fail");
+        return;
+    }
+
+    m_ViewportSize = {300, 200};
+    m_CacheViewportSize = m_ViewportSize;
 }
 
 void EditorLayer::OnDetach()
 {
 }
 
-void EditorLayer::OnUpdate(ME::Timestep timestep)
+void EditorLayer::OnUpdate(Timestep timestep)
 {
     static_cast<void>(timestep);
+
+    RHIExtend2D size = m_CacheViewportSize;
+    if (size.Width != m_ViewportSize.Width || size.Height != m_ViewportSize.Height)
+    {
+        m_ViewportSize = size;
+        bool ret = m_ImageRenderPass->Resize(size.Width, size.Height);
+        ME_ASSERT(ret == true, "ImageRenderPass::Resize fail");
+        IMAGEVIWER_LOG_INFO("Viewport resize: ({}, {})", size.Width, size.Height);
+    }
+
+    Ref<RHICommandBuffer> cmdBuffer = m_RHI->GetCurrentCommandBuffer();
+    m_ImageRenderPass->Draw(cmdBuffer);
 }
 
 void EditorLayer::OnUIUpdate()
@@ -33,7 +59,7 @@ void EditorLayer::OnUIUpdate()
 
     if (m_CurrentImage.Avaliable)
     {
-        ME::Ref<ME::FileReader> file = m_CurrentImage.FileReader;
+        Ref<FileReader> file = m_CurrentImage.FileReader;
         if (ImGui::CollapsingHeader("File", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::Text("File Name: %s", file->GetFileName().c_str());
@@ -41,11 +67,11 @@ void EditorLayer::OnUIUpdate()
             ImGui::Text("File size: %s", file->GetFileSizeInStr().c_str());
         }
 
-        ME::Ref<ME::ImageLoader> imageLoader = m_CurrentImage.ImageLoader;
+        Ref<ImageLoader> imageLoader = m_CurrentImage.ImageLoader;
         if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            const ME::ImageInfo& imageInfo = imageLoader->GetImageInfo();
-            std::string format = ME::Utils::EMPixelFormatToStr(imageInfo.Format);
+            const ImageInfo& imageInfo = imageLoader->GetImageInfo();
+            std::string format = Utils::EMPixelFormatToStr(imageInfo.Format);
 
             ImGui::Text("Type:   \t%s", imageInfo.TypeInStr.c_str());
             ImGui::Text("Width:  \t%d", imageInfo.Width);
@@ -59,6 +85,12 @@ void EditorLayer::OnUIUpdate()
     // Viewport
     ImGui::Begin("Viewport");
 
+    ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+    m_CacheViewportSize = {(uint32_t)viewportSize.x, (uint32_t)viewportSize.y};
+
+    void* texID = m_ImageRenderPass->GetTargetImTextureID();
+    ImGui::Image(texID, ImVec2(viewportSize.x, viewportSize.y), ImVec2(0, 1), ImVec2(1, 0));
+
     ImGui::End();
 
     // ImGui Demo
@@ -69,11 +101,11 @@ void EditorLayer::OnUIUpdate()
     EndDockspace();
 }
 
-void EditorLayer::OnEvent(ME::Event& event)
+void EditorLayer::OnEvent(Event& event)
 {
-    ME::EventDispatcher dispatcher(event);
-    dispatcher.Dispatch<ME::FileDropEvent>(
-        [this](ME::FileDropEvent& event) -> bool
+    EventDispatcher dispatcher(event);
+    dispatcher.Dispatch<FileDropEvent>(
+        [this](FileDropEvent& event) -> bool
         {
             return OnFileDrop(event);
         });
@@ -142,13 +174,13 @@ void EditorLayer::EndDockspace()
     ImGui::End();
 }
 
-bool EditorLayer::OnFileDrop(ME::FileDropEvent& event)
+bool EditorLayer::OnFileDrop(FileDropEvent& event)
 {
     std::string imagePath = event.GetDropFiles()[0];
 
     Image image;
-    ME::Ref<ME::FileReader>& file = image.FileReader;
-    file = ME::CreateRef<ME::FileReader>(imagePath);
+    Ref<FileReader>& file = image.FileReader;
+    file = CreateRef<FileReader>(imagePath);
     file->Detect();
     if (!file->IsExist())
     {
@@ -156,8 +188,8 @@ bool EditorLayer::OnFileDrop(ME::FileDropEvent& event)
         return false;
     }
 
-    ME::Ref<ME::ImageLoader>& imageLoader = image.ImageLoader;
-    imageLoader = ME::ImageLoader::CreateInstance(imagePath);
+    Ref<ImageLoader>& imageLoader = image.ImageLoader;
+    imageLoader = ImageLoader::CreateInstance(imagePath);
     imageLoader->Detect();
     bool res = imageLoader->Avaliable();
     if (!res)
@@ -173,7 +205,7 @@ bool EditorLayer::OnFileDrop(ME::FileDropEvent& event)
         return false;
     }
 
-    ME::ImageFrame frame = imageLoader->GetImageFrame();
+    ImageFrame frame = imageLoader->GetImageFrame();
 
     image.Avaliable = true;
 

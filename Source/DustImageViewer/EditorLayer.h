@@ -4,6 +4,7 @@
 #include "MediaEngine/Include/Event/ApplicationEvent.h"
 #include "MediaEngine/Include/FileSystem/FileReader.h"
 #include "MediaEngine/Include/Media/ImageLoader.h"
+#include "ImageRenderPass.h"
 
 class EditorLayer : public ME::Layer
 {
@@ -32,4 +33,10 @@ private:
     };
 
     Image m_CurrentImage;
+
+    ME::RHIExtend2D m_ViewportSize;
+    ME::RHIExtend2D m_CacheViewportSize;
+
+    ME::Ref<ME::RHI> m_RHI;
+    ME::Ref<ImageRenderPass> m_ImageRenderPass;
 };
