@@ -215,7 +215,7 @@ void ImageRenderPass::UpdateImageBuffer(uint32_t w, uint32_t h, ME::Ref<ME::RHIB
     m_TextureBuffer = buffer;
 
     RHITexture2DCreateDesc imageTexCreateDesc;
-    imageTexCreateDesc.PixelFormat = ERHIPixelFormat::PF_R8G8B8A8_UNORM;
+    imageTexCreateDesc.PixelFormat = ERHIPixelFormat::PF_B8G8R8A8_UNORM;
     imageTexCreateDesc.Width = w;
     imageTexCreateDesc.Height = h;
     imageTexCreateDesc.NumMips = 1;
