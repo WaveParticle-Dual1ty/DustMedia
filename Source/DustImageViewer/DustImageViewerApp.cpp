@@ -9,11 +9,14 @@
 
 std::unique_ptr<ME::Application> ME::CreateApplication()
 {
-    return std::make_unique<DustImageViewerApp>();
+    std::filesystem::path binPath = std::filesystem::current_path();
+    std::filesystem::path resourcePath = binPath / "Resources/DustImageViewer";
+    resourcePath = std::filesystem::absolute(resourcePath);
+    return std::make_unique<DustImageViewerApp>(binPath.string(), resourcePath.string());
 }
 
-DustImageViewerApp::DustImageViewerApp()
-    : Application({"Dust Image Viewer", "", ""})
+DustImageViewerApp::DustImageViewerApp(const std::string& binPath, const std::string& resourcePath)
+    : Application({"Dust Image Viewer", binPath, resourcePath})
 {
 }
 

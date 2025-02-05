@@ -162,6 +162,13 @@ bool ImageLoaderImpl::Load()
     m_ImageFrame.Linesize[1] = static_cast<uint32_t>(frame->linesize[1]);
     m_ImageFrame.Linesize[2] = static_cast<uint32_t>(frame->linesize[2]);
     m_ImageFrame.Linesize[3] = static_cast<uint32_t>(frame->linesize[3]);
+
+    // todo
+    m_ImageFrame.Datasize[0] = frame->linesize[0] * frame->height;
+    m_ImageFrame.Datasize[1] = 0;
+    m_ImageFrame.Datasize[2] = 0;
+    m_ImageFrame.Datasize[3] = 0;
+
     return true;
 }
 

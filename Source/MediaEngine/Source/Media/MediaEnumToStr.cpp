@@ -13,6 +13,8 @@ std::string EMPixelFormatToStr(EMPixelFormat format)
             return "None";
         case EMPixelFormat::BGR24:
             return "BGR24";
+        case EMPixelFormat::BGRA32:
+            return "BGRA32";
         case EMPixelFormat::YUVJ420P:
             return "YUVJ420P";
         default:

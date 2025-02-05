@@ -39,6 +39,9 @@ EMPixelFormat ConvertAVPixelFormatToEMPixelFormat(AVPixelFormat format)
         case AV_PIX_FMT_YUVJ420P:
             res = EMPixelFormat::YUVJ420P;
             break;
+        case AV_PIX_FMT_BGRA:
+            res = EMPixelFormat::BGRA32;
+            break;
         default:
             res = EMPixelFormat::None;
             ME_ASSERT(false, "ConvertAVPixelFormatToEMPixelFormat: Not support AVPixelFormat now");

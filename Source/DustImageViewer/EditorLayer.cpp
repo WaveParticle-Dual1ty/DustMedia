@@ -212,5 +212,14 @@ bool EditorLayer::OnFileDrop(FileDropEvent& event)
     if (image.Avaliable == true)
         m_CurrentImage = image;
 
+    // todo, now only support rgb
+    RHIBufferCreateDesc bufferDesc;
+    bufferDesc.Usage = RHI_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    bufferDesc.MemoryProperty = RHI_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    bufferDesc.BufferSize = frame.Datasize[0];
+    bufferDesc.Data = frame.Data[0];
+    m_ImageBuffer = m_RHI->CreateRHIBuffer(bufferDesc);
+    m_ImageRenderPass->UpdateImageBuffer(frame.Width, frame.Height, m_ImageBuffer);
+
     return false;
 }

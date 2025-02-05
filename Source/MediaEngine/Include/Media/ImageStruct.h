@@ -29,6 +29,7 @@ struct ImageFrame
     uint32_t Height = 0;
     std::array<void*, 4> Data = {nullptr, nullptr, nullptr, nullptr};
     std::array<uint32_t, 4> Linesize = {0, 0, 0, 0};
+    std::array<uint32_t, 4> Datasize = {0, 0, 0, 0};
 };
 
 }  //namespace ME

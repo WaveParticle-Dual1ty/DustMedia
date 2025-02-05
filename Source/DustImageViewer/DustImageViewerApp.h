@@ -7,7 +7,7 @@
 class DustImageViewerApp : public ME::Application
 {
 public:
-    DustImageViewerApp();
+    DustImageViewerApp(const std::string& binPath, const std::string& resourcePath);
 
 private:
     virtual bool OnEngineInit() override;

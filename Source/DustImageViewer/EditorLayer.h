@@ -39,4 +39,6 @@ private:
 
     ME::Ref<ME::RHI> m_RHI;
     ME::Ref<ImageRenderPass> m_ImageRenderPass;
+
+    ME::Ref<ME::RHIBuffer> m_ImageBuffer;
 };
