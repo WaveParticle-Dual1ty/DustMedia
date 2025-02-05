@@ -89,7 +89,7 @@ void EditorLayer::OnUIUpdate()
     m_CacheViewportSize = {(uint32_t)viewportSize.x, (uint32_t)viewportSize.y};
 
     void* texID = m_ImageRenderPass->GetTargetImTextureID();
-    ImGui::Image(texID, ImVec2(viewportSize.x, viewportSize.y), ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image(texID, ImVec2(viewportSize.x, viewportSize.y), ImVec2(0, 0), ImVec2(1, 1));
 
     ImGui::End();
 
