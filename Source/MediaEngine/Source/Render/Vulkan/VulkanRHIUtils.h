@@ -7,6 +7,7 @@
 #include "MediaEngine/Include/Render/RHIResources.h"
 #include "MediaEngine/Include/Render/RHIBuffer.h"
 #include "MediaEngine/Include/Render/RHITexture.h"
+#include "MediaEngine/Include/Render/RHIPipeline.h"
 
 namespace ME
 {

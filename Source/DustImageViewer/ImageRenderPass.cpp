@@ -231,8 +231,8 @@ void ImageRenderPass::UpdateImageBuffer(uint32_t w, uint32_t h, ME::Ref<ME::RHIB
 
     // Update DescriptorSets
     std::vector<RHIWriteDescriptorSet> writeDescSets = {
-        {ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, 0, m_Texture}
-    };
+        RHIWriteDescriptorSet(ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_SAMPLER, 0, 0, m_Sampler),
+        RHIWriteDescriptorSet(ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, 0, m_Texture)};
 
     m_RHI->UpdateDescriptorSets(m_DescriptorSet, writeDescSets);
 }
@@ -246,7 +246,8 @@ bool ImageRenderPass::CreateGraphicPipelineAndResources()
 {
     // Descriptor Set
     RHIDescriptorSetCreateInfo descSetCreateInfo = {
-        {0, ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, RHI_SHADER_STAGE_FRAGMENT_BIT}
+        {0,       ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_SAMPLER, 1, RHI_SHADER_STAGE_FRAGMENT_BIT},
+        {1, ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, RHI_SHADER_STAGE_FRAGMENT_BIT}
     };
 
     m_DescriptorSet = m_RHI->CreateRHIDescriptorSet(descSetCreateInfo);
@@ -257,6 +258,15 @@ bool ImageRenderPass::CreateGraphicPipelineAndResources()
     }
 
     m_DescriptorSets = {m_DescriptorSet};
+
+    // Sampler
+    RHISamplerCreateInfo samplerInfo;
+    m_Sampler = m_RHI->CreateRHISampler(samplerInfo);
+    if (!m_Sampler)
+    {
+        IMAGEVIWER_LOG_ERROR("RHI::CreateRHISampler fail");
+        return false;
+    }
 
     // Shaders
     const std::string resPath = Application::Get().GetResourcePath();

@@ -38,6 +38,7 @@ private:
 
     ME::Ref<ME::RHIDescriptorSet> m_DescriptorSet;
     std::vector<ME::Ref<ME::RHIDescriptorSet>> m_DescriptorSets;
+    ME::Ref<ME::RHISampler> m_Sampler;
     ME::Ref<ME::RHIShader> m_VertexShader;
     ME::Ref<ME::RHIShader> m_PixelShader;
     ME::Ref<ME::RHIGraphicPipeline> m_Pipeline;

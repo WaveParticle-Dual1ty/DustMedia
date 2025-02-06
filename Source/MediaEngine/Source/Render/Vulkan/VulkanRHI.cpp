@@ -12,6 +12,7 @@
 #include "VulkanRHIBuffer.h"
 #include "VulkanRHIDescriptorSet.h"
 #include "VulkanWrapper.h"
+#include "VulkanRHIPipeline.h"
 
 namespace ME
 {
@@ -613,6 +614,39 @@ Ref<RHIDescriptorSet> VulkanRHI::CreateRHIDescriptorSet(RHIDescriptorSetCreateIn
     return rhiDescSet;
 }
 
+Ref<RHISampler> VulkanRHI::CreateRHISampler(RHISamplerCreateInfo createInfo)
+{
+    VkSamplerCreateInfo samplerCreateInfo;
+    samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerCreateInfo.pNext = nullptr;
+    samplerCreateInfo.flags = 0;
+    samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+    samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+    samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerCreateInfo.mipLodBias = 0;
+    samplerCreateInfo.anisotropyEnable = VK_FALSE;
+    samplerCreateInfo.maxAnisotropy = 1;
+    samplerCreateInfo.compareEnable = VK_FALSE;
+    samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
+    samplerCreateInfo.minLod = 0;
+    samplerCreateInfo.maxLod = 0;
+    samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+
+    Ref<VulkanRHISampler> rhiSampler = CreateRef<VulkanRHISampler>();
+    VkResult res = vkCreateSampler(m_Device, &samplerCreateInfo, nullptr, &rhiSampler->Sampler);
+    if (res != VK_SUCCESS)
+    {
+        RENDER_LOG_ERROR("vkCreateSampler fail");
+        return nullptr;
+    }
+
+    return rhiSampler;
+}
+
 Ref<RHIGraphicPipeline> VulkanRHI::CreateGraphicPipeline(RHIGraphicPipelineCreateInfo createInfo)
 {
     // shader
@@ -865,6 +899,52 @@ void VulkanRHI::UpdateDescriptorSets(
             writeDescSet.dstArrayElement = rhiSet.DstArrayElement;
             writeDescSet.descriptorCount = 1;
             writeDescSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writeDescSet.pImageInfo = &descImageInfo;
+            writeDescSet.pBufferInfo = nullptr;
+            writeDescSet.pTexelBufferView = nullptr;
+
+            writeDescSets[i] = writeDescSet;
+        }
+        else if (rhiSet.DescriptorType == ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_SAMPLER)
+        {
+            Ref<VulkanRHISampler> sampler = std::dynamic_pointer_cast<VulkanRHISampler>(rhiSet.Sampler);
+
+            VkDescriptorImageInfo descImageInfo = {};
+            descImageInfo.sampler = sampler->Sampler;
+            descImageInfo.imageView = nullptr;
+            descImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+            VkWriteDescriptorSet writeDescSet = {};
+            writeDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescSet.pNext = VK_NULL_HANDLE;
+            writeDescSet.dstSet = dstSet;
+            writeDescSet.dstBinding = rhiSet.DstBinding;
+            writeDescSet.dstArrayElement = rhiSet.DstArrayElement;
+            writeDescSet.descriptorCount = 1;
+            writeDescSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+            writeDescSet.pImageInfo = &descImageInfo;
+            writeDescSet.pBufferInfo = nullptr;
+            writeDescSet.pTexelBufferView = nullptr;
+
+            writeDescSets[i] = writeDescSet;
+        }
+        else if (rhiSet.DescriptorType == ERHIDescriptorType::RHI_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
+        {
+            Ref<VulkanRHITexture2D> texture = std::dynamic_pointer_cast<VulkanRHITexture2D>(rhiSet.Texture);
+
+            VkDescriptorImageInfo descImageInfo = {};
+            descImageInfo.sampler = VK_NULL_HANDLE;
+            descImageInfo.imageView = texture->m_ImageView;
+            descImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            VkWriteDescriptorSet writeDescSet = {};
+            writeDescSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeDescSet.pNext = nullptr;
+            writeDescSet.dstSet = dstSet;
+            writeDescSet.dstBinding = rhiSet.DstBinding;
+            writeDescSet.dstArrayElement = rhiSet.DstArrayElement;
+            writeDescSet.descriptorCount = 1;
+            writeDescSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
             writeDescSet.pImageInfo = &descImageInfo;
             writeDescSet.pBufferInfo = nullptr;
             writeDescSet.pTexelBufferView = nullptr;
